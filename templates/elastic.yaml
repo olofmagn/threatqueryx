@@ -1,0 +1,150 @@
+failed_logins:
+  description: "Search for authentication failures with optional filters."
+  base: "event.category: 'authentication'"
+  required_fields:
+    - "event.outcome: 'failure'"
+  optional_fields:
+    user.name:
+      pattern: "user.name: '{value}'"
+      help: "The username to filter on (e.g., admin)"
+    source.ip:
+      pattern: "source.ip: '{value}'"
+      help: "Source IP address of the login attempt"
+      validation: "ip"
+
+firewall_block:
+  description: "Detect firewall blocks by protocol and port."
+  base: "event.category: 'network'"
+  required_fields:
+    - "fortinet.firewall.action: 'blocked'"
+  optional_fields:
+    network.transport:
+      pattern: "network.protocol: '{value}'"
+      help: "Network protocol e.g. (https)"
+    destination.port:
+      pattern: "destination.port: '{value}'"
+      help: "Destination port number"
+      validation: "integer"
+
+dns_domains:
+  description: "Look for suspicious dns domains in threat feed or fast lookup"
+  base: "event.category: 'network'"
+  required_fields:
+    - "network.protocol: 'dns'"
+  optional_fields:
+    url.domain:
+      pattern: "url.domain: '{value}'"
+    source.ip:
+      pattern: "source.ip: '{value}'"
+      help: "Source IP of suspicious DNS queries"
+      validation: "ip"
+    destination_bytes:
+      pattern: "destination.bytes: '{value}'"
+      help: "Destination bytes in transmission"
+
+rce_attempts:
+  description: "Detect potential remote command execution attempts in logs."
+  base: "events"
+  required_fields:
+    - "event.category: file"
+    - "process.executable: '{value}'"
+  optional_fields:
+    source.ip:
+      pattern: "source.ip: '{value}'"
+      help: "Source IP address of the exploit attempt"
+      validation: "ip"
+    destination.ip:
+      pattern: "destination.ip: '{value}'"
+      help: "Destination IP of the exploit attempt"
+
+powershell_execution:
+  description: "Find suspicious PowerShell execution events."
+  base: "event.category: 'process'"
+  required_fields:
+    - "event.dataset: 'windows.powershell_operational'"
+    - "message: '{value}'"
+  optional_fields:
+    user.name:
+      pattern: "user.name: '{value}'"
+      help: "Username running PowerShell"
+
+rdp_loopback_traffic:
+  description: "Detect RDP (port 3389) traffic involving loopback addresses (127.0.0.0/8) using Event ID 5156."
+  base: "event.category: 'network'"
+  required_fields:
+  - "event.id: '5156'"
+  - "(source.port: '3389' or destination.port: '3389')"
+  - "(source.ip: '127.0.0.0/8' or destination.ip: '127.0.0.0/8')"
+  source.ip:
+    pattern: "source.ip: '{value}'"
+    help: "Filter for a specific source IP address"
+    validation: "ip"
+  destination.ip:
+  pattern: "destination.ip: '{value}'"
+  help: "Filter for a specific destination IP address"
+  validation: "ip"
+
+builtin_account_enabled:
+  description: "Detect when built-in accounts like Guest, DefaultAccount, or Administrator are enabled (Event ID 4722)."
+  base: "event.category: 'authentication'"
+  required_fields:
+    - "event.code: '4722'"
+    - "(user.name: 'guest' or user.name: 'defaultaccount' OR user.name: 'administrator')"
+  optional_fields:
+    source.ip:
+      pattern: "source.ip: '{value}'"
+      help: "Filter by source IP address"
+      validation: "ip"
+
+service_task_creation_commands:
+  description: "Detect process creation events involving commands for service creation or scheduled tasks."
+  base: "event.category: 'process'"
+  required_fields:
+    - "event.id: 4688"
+    - '(process.command_line: *create* OR process.command_line: */SC* OR process.command_line: */TN*)'
+  optional_fields:
+    source.ip:
+      pattern: "source.ip: '{value}'"
+      help: "Filter by source IP address"
+      validation: "ip"
+    user.name:
+      pattern: "user.name: '{value}'"
+      help: "Filter by username"
+    process.command_line:
+      pattern: "process.command_line: '{value}'"
+      help: "Filter for commands containing specific strings"
+
+suspicious_command_flags:
+  description: "Detect process creation events with commands containing /transfer, /priority, or /download flags."
+  base: "event.category: 'process'"
+  required_fields:
+    - "event.id: '4688'"
+    - "(process.command_line: */transfer OR process.command_line: */priority OR process.command_line: */download)"
+  optional_fields:
+    source.ip:
+      pattern: "source.ip: '{value}'"
+      help: "Filter by source IP address"
+      validation: "ip"
+    user.name:
+      pattern: "user.name: '{value}'"
+      help: "Filter by username"
+
+dns_txt_base64_payloads:
+  description: "Detect DNS TXT requests from specified DNS log sources."
+  base: "event.category: 'network'"
+  required_fields:
+    - "network.protocol: 'dns'"
+    - "message: '*TXT*'"
+  optional_fields:
+    source.ip:
+      pattern: "source.ip: '{value}'"
+      help: "Filter by source IP address"
+      validation: "ip"
+    destination.ip:
+      pattern: "destination.ip: '{value}'"
+      help: "Filter by destination IP address"
+      validation: "ip"
+    dns.question.type:
+      pattern: "dns.question.type: '{value}'"
+      help: "Filter by DNS request type"
+

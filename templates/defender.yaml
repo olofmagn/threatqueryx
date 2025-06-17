@@ -1,0 +1,74 @@
+failed_logins:
+  description: "Identify failed sign-in attempts in Defender logs."
+  base: "IdentityLogonEvents"
+  required_fields: 
+    - "where LogonType == 'Interactive' and ActionType == 'LogonFailed"
+  optional_fields:
+    username:
+      pattern: "where AccountName == '{value}'"
+      help: "Username that failed to sign in"
+    source_ip:
+      pattern: "where IPAddress == '{value}'"
+      help: "Source IP address of the logon attempt"
+      validation: "ip"
+
+phishing_site:
+  description: "Identify dns lookups to potential phishing domains"
+  base: "DeviceNetworkEvents"
+  required_fields:
+  - "summarise count() by InitiatingProcessAccountUpn, DeviceName, RemoteUrl, Timestamp, DeviceId, ReportId"
+  optional_fields:
+    url_domain:
+      pattern: "RemoteUrl contains '.{value}'"
+      help: "The domain the request is initiated towards"
+
+firewall_block:
+  description: "Detect blocked inbound connections on endpoints."
+  base: "DeviceNetworkEvents"
+  required_fields:
+    - "summarise count() by InitiatingProcessAccountUpn, DeviceName, RemoteUrl, Timestamp, DeviceId, ReportId"
+    - "where ActionType == 'ConnectionBlocked'"
+  optional_fields:
+    protocol:
+      pattern: "| where Protocol == '{value}'"
+      help: "Network protocol (e.g., TCP, UDP)"
+    port:
+      pattern: "| where RemotePort == '{value}'"
+      help: "Blocked destination port"
+      validation: "integer"
+
+dns_exfiltration:
+  description: "Look for long suspicious DNS queries that may indicate exfiltration."
+  base: "DeviceNetworkEvents"
+  required_fields:
+     - "summarise count() by InitiatingProcessAccountUpn, DeviceName, RemoteUrl, Timestamp, DeviceId, ReportId"
+  optional_fields:
+    source_ip:
+      pattern: 'where RemoteUrl == "{value}"'
+      help: "Source IP making the DNS request"
+      validation: "ip"
+
+rce_attempts:
+  description: "Search for suspicious remote command execution patterns."
+  base: "DeviceProcessEvents"
+  required_fields:
+    - "where FileName has_any('powershell.exe', 'cmd.exe', 'wscript.exe', 'cscript.exe')"
+    - "where ProcessCommandLine has_any('Invoke-WebRequest', 'IEX', 'curl', 'wget', 'base64')"
+  optional_fields:
+    source_ip:
+      pattern: "where RemoteIP == '{value}'"
+      help: "Initiator IP of suspected RCE"
+      validation: "ip"
+
+powershell_execution:
+  description: "Hunt for unusual PowerShell usage on endpoints."
+  base: "DeviceProcessEvents"
+  required_fields:
+    - "where FileName == 'powershell.exe'"
+  optional_fields:
+    username:
+      pattern: "where AccountName == '{value}'"
+      help: "Username who launched PowerShell"
+    command_line:
+      pattern: "where ProcessCommandLine has '{value}'"
+      help: "Part of command line used"
