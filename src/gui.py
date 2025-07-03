@@ -44,10 +44,10 @@ class QueryGui:
         self.update_field_visibility()
 
     def create_widgets(self):
-
         """
         Create and layout all necessary widgets with consistent styling
         """
+
         # === Platform Selector ===
         ttk.Label(self.frame, text="Platform:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
         self.platform_var = tk.StringVar(value=self.platform)
@@ -80,10 +80,10 @@ class QueryGui:
         self.fields = {}
 
         # === Time Range ===
-        ttk.Label(self.frame, text="Time Range:").grid(row=3, column=0, sticky="w", padx=5, pady=5)
+        ttk.Label(self.frame, text="Time Range:").grid(row=3, column=0, sticky="nsew", padx=5, pady=5)
 
         time_frame = ttk.Frame(self.frame)
-        time_frame.grid(row=3, column=1, sticky="ew", padx=5, pady=5)
+        time_frame.grid(row=3, column=1, sticky="nsew", padx=5, pady=5)
 
         self.lookback_var = tk.StringVar(value=self.TIME_RANGES[1])
         self.time_entry = ttk.Entry(time_frame, textvariable=self.lookback_var, width=15)
@@ -95,25 +95,33 @@ class QueryGui:
         self.btn_time_next = ttk.Button(time_frame, text="❯", width=2, command=lambda: self.change_time_range(1))
         self.btn_time_next.pack(side="left", padx=2)
 
+        # Defender button for post_pipeline
+        self.include_post_pipeline_var = tk.BooleanVar(value=False)
+        self.checkbox = tk.Checkbutton(
+                self.frame, 
+                text="Include summarisation",
+                variable=self.include_post_pipeline_var
+                )
+
         # === Generate Button ===
         generate_btn = ttk.Button(self.frame, text="Generate Query", command=self.generate)
-        generate_btn.grid(row=4, column=0, columnspan=2, pady=10, sticky="ew", padx=5)
+        generate_btn.grid(row=5, column=0, columnspan=2, pady=10, sticky="ew", padx=5)
 
         # === Output Text Box ===
         self.output_text = ScrolledText(self.frame, height=10, wrap=tk.WORD)
-        self.output_text.grid(row=5, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
+        self.output_text.grid(row=6, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
 
         # === Copy Button ===
         copy_btn = ttk.Button(self.frame, text="Copy to Clipboard", command=self.copy)
-        copy_btn.grid(row=6, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
+        copy_btn.grid(row=7, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
 
         # === Separator ===
         separator = ttk.Separator(self.frame, orient="horizontal")
-        separator.grid(row=7, column=0, columnspan=2, sticky="nsew", pady=(10, 5))
+        separator.grid(row=8, column=0, columnspan=2, sticky="nsew", pady=(10, 5))
 
         # === Info Label ===
         self.platform_info_label = ttk.Label(self.frame, text="")
-        self.platform_info_label.grid(row=8, column=0, columnspan=2, sticky="nsew", pady=5, padx=5)
+        self.platform_info_label.grid(row=9, column=0, columnspan=2, sticky="nsew", pady=5, padx=5)
         self.platform_info_label.config(anchor="center", justify="center")
 
         # === Copyright Label ===
@@ -152,6 +160,12 @@ class QueryGui:
         """
         self.platform_info_label.config(text=self.get_platform_info_text())
 
+
+        if self.platform == "defender":
+            self.checkbox.grid(row=4, column=0, columnspan=2,padx=5, pady=5, sticky="nsew")
+        else:
+            self.checkbox.grid_forget()  # hide checkbox
+
     def on_platform_change(self, event=None) -> None:
 
         """
@@ -162,7 +176,6 @@ class QueryGui:
             self.platform = plat
             self.load_templates_for_platform(plat)
 
-        # Always update the platform info label, even if platform did not change
         self.update_field_visibility()
 
     def load_templates_for_platform(self, platform: str) -> None: 
@@ -179,7 +192,6 @@ class QueryGui:
         self.template_var.set("")
         self.template_menu["values"] = list(self.templates.keys())
         self.clear_fields()
-
 
     def clear_fields(self) -> None:
 
@@ -255,8 +267,8 @@ class QueryGui:
         template = self.templates[template_name]
         lookback = self.lookback_var.get()
         duration = normalize_lookback(lookback, self.platform)
-        inputs = {}
 
+        inputs = {}
         for field, (var, validation_type) in self.fields.items():
             value = var.get().strip()
 
@@ -267,8 +279,14 @@ class QueryGui:
                     messagebox.showerror("Invalid input", f"{field}: {msg}")
                     return
                 inputs[field] = value
+        
+        if self.platform == "defender":
+            include_post = self.include_post_pipeline_var.get()
+        else:
+            include_post = False
+
         try:
-            query = build_query(template, inputs, duration, self.platform)
+            query = build_query(template, inputs, duration, self.platform, include_post)
             self.output_text.delete("1.0", tk.END)
             self.output_text.insert(tk.END, query)
         except Exception as e:
