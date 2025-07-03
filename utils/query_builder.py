@@ -3,7 +3,7 @@
 Query builder
 """
 
-def build_query(template: str, inputs: str, duration: int, platform: str) -> str:
+def build_query(template: str, inputs: str, duration: int, platform: str, include_post_pipeline=False) -> str:
 
     """
     Builds a query with a tempate, inputs, durations and the provided platform.
@@ -18,7 +18,6 @@ def build_query(template: str, inputs: str, duration: int, platform: str) -> str
     - str: A query given all these above parameters.
     """
 
-    # Safe access as it might be None
     base = template.get("base")
     conditions = list(template["required_fields"])
 
@@ -29,10 +28,14 @@ def build_query(template: str, inputs: str, duration: int, platform: str) -> str
 
     match platform:
         case "qradar":
-            query = f"{base} WHERE {' AND '.join(conditions)} LAST {duration}"
+            query = f"{base} where {' and '.join(conditions)} LAST {duration}"
 
         case "defender":
-            query = f"{base} \n | {' and '.join(conditions)} \n | where Timestamp > ago({duration})"
+            condition_string = ' and '.join(conditions) if conditions else "true"
+            query = f"{base} \n | where {condition_string} \n | where Timestamp > ago({duration})"
+            # Allow the possibility to search for both structured/raw events depending on user input
+            if include_post_pipeline and "post_pipeline" in template:
+                query += f"\n | {template['post_pipeline']}"
 
         case "elastic":
             query = f"{base}: and {' and '.join(conditions)} and @timestamp >= now-{duration}"

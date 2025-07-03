@@ -1,4 +1,5 @@
 import questionary
+import sys
 
 from typing import List
 
@@ -15,6 +16,7 @@ class QueryCli:
     def __init__(self, platform: str, templates: List[str]) -> str:
         self.platform = platform
         self.templates = templates
+        self.include_post_pipeline = False
 
     def build_query_for_cli(self) -> None:
             """
@@ -59,6 +61,11 @@ class QueryCli:
                     inputs[key] = value
                     break # Exit if we get a valid result
             
+            # Post-pipeline summarisation
+            if self.platform == "defender":
+                self.include_post_pipeline = input(
+                        "Include summarization (post_pipeline)? [y/N]: ").strip().lower() == "y"
+
             while True:
                 lookback = input("Time range (default '10 MINUTES'): ").strip()
                 if not lookback:
@@ -71,7 +78,7 @@ class QueryCli:
                     continue
                 break
 
-            query = build_query(template, inputs, duration, self.platform)
+            query = build_query(template, inputs, duration, self.platform, self.include_post_pipeline)
             print("\nGenerated Query:\n")
             print(query)
 
