@@ -30,13 +30,13 @@ class QueryCli:
                         value = name
                         )
                     for name, meta in self.templates.items()
-                    ] + [questionary.Choice("Quit", value="Quit")]
+                    ] + [questionary.Choice("Quit", value="quit")]
 
             template_name = questionary.select(
                     "Choose a template to use:",
                     choices=choices).ask()
 
-            if template_name == "Quit" or template_name is None:
+            if template_name in ("quit", None):
                 sys.exit(1)
 
             template = self.templates[template_name]

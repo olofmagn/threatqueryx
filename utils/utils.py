@@ -13,6 +13,7 @@ VALID_PLATFORMS = {
 }
 
 def load_templates(platform: str) -> Dict:
+
     """
     Loads templates for the specified SIEM platform.
 
@@ -35,6 +36,7 @@ def load_templates(platform: str) -> Dict:
         sys.exit(1)
 
 def validate(value: str, val_type: str) -> tuple[bool, str]:
+
     """
     Validates a given value against a specific type
 
@@ -56,6 +58,7 @@ def validate(value: str, val_type: str) -> tuple[bool, str]:
     return True, ""
 
 def parse_args():
+
     """
     Returns:
     - str: A parsed mode and platform string to determine use.
@@ -73,6 +76,7 @@ def parse_args():
     return mode, platform
 
 def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: str) -> str:
+
     """
     Resolves platform and templates given the platform
 
@@ -90,14 +94,14 @@ def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: str) -
                 value=name
             )
             for name, meta in VALID_PLATFORMS.items()
-        ] + [questionary.Choice("Quit", value="Quit")]
+        ] + [questionary.Choice("Quit", value="quit")]
 
         platform = questionary.select(
             "Choose a platform to use:",
             choices=choices
         ).ask()
 
-        if platform in ("Quit", None):
+        if platform in ("quit", None):
             sys.exit(1)
 
         try:
@@ -108,12 +112,11 @@ def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: str) -
             sys.exit(1)
 
     else:
-        # GUI mode - just return platform, templates is None for now
-        # make sure platform is set to something valid
         platform = platform or "qradar"
         return platform, None
 
 def choose_mode():
+
     """
     Choose between gui and CLI mode.
 
@@ -129,10 +132,11 @@ def choose_mode():
     ).ask() or "quit"
 
     if mode == "quit":
-        sys.exit(0)
+        sys.exit(1)
     return mode
 
 def normalize_lookback(lookback: str, platform) -> str:
+
     """
     Normalises lookback values for Defender/Elastic platform.
     

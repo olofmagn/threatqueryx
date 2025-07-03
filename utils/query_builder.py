@@ -1,4 +1,10 @@
+
+"""
+Query builder
+"""
+
 def build_query(template: str, inputs: str, duration: int, platform: str) -> str:
+
     """
     Builds a query with a tempate, inputs, durations and the provided platform.
 
@@ -10,8 +16,8 @@ def build_query(template: str, inputs: str, duration: int, platform: str) -> str
 
     Returns:
     - str: A query given all these above parameters.
-
     """
+
     # Safe access as it might be None
     base = template.get("base")
     conditions = list(template["required_fields"])

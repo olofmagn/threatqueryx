@@ -5,6 +5,8 @@ Author: Olof Magnusson
 Date: 2025-06-18
 """
 
+VERSION = "1.0.0"
+
 import tkinter as tk
 
 from utils.utils import parse_args
@@ -14,7 +16,7 @@ from utils.utils import choose_mode
 from .cli import QueryCli
 from .gui import QueryGui
 
-BANNER= r"""
+BANNER= rf"""
   _   _                    _
  | |_| |__  _ __ ___  __ _| |_ __ _ _   _  ___ _ __ _   ___  __
  | __| '_ \| '__/ _ \/ _` | __/ _` | | | |/ _ \ '__| | | \ \/ /
@@ -24,7 +26,7 @@ BANNER= r"""
 
 Welcome to the application! 
 Enjoy using the app, and feel free to share any feature requests or feedback!
-Designed by Olof Magnusson (olofmagn)
+Version {VERSION}
 """
 
 def main():
