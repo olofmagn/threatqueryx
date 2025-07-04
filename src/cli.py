@@ -1,7 +1,7 @@
 import questionary
 import sys
 
-from typing import List
+from typing import List, Dict
 
 from utils.utils import validate
 from utils.utils import normalize_lookback
@@ -9,76 +9,107 @@ from utils.utils import choose_mode
 from utils.query_builder import build_query
 
 """
-Provide an cli interface to specify the template and platform for search
+Provide an cli interface to specify the template and platform for search.
 """
 
 class QueryCli:
-    def __init__(self, platform: str, templates: List[str]) -> str:
+    def __init__(self, platform: str, templates: Dict[str, any]) -> None:
         self.platform = platform
         self.templates = templates
         self.include_post_pipeline = False
 
     def build_query_for_cli(self) -> None:
-            """
-            Build query for cli
-            """
-            if not self.templates:
-                print("No templates available.")
-                sys.exit(1)
+        
+        """
+        Build query for cli given template, inputs, duration, platform and post_pipeline.
+        """
+        if not self.templates:
+            print("No templates available.")
+            sys.exit(1)
 
-            choices = [
-                    questionary.Choice(
-                        title=f"{name} - {meta.get('description', 'No description')}",
-                        value = name
-                        )
-                    for name, meta in self.templates.items()
-                    ] + [questionary.Choice("Quit", value="quit")]
+        template_name = self.get_template()
+        template = self.templates[template_name]
+        print(f"\n{template.get('description', 'no help')}\n")
 
-            template_name = questionary.select(
-                    "Choose a template to use:",
-                    choices=choices).ask()
+        inputs = self.get_inputs(template)
+        duration = self.get_lookback()
 
-            if template_name in ("quit", None):
-                sys.exit(1)
+        query = build_query(template, inputs, duration, self.platform, self.include_post_pipeline)
+        print("Generated query:\n")
+        print(query)
 
-            template = self.templates[template_name]
-            print(f"\n{template.get('description', 'no help')}\n")
+    def get_template(self) -> str:
 
-            inputs = {}
-            for key, meta in template.get("optional_fields", {}).items():
-                while True:
-                    value = input(f"{key} ({meta.get('help', '')}): ").strip()
-                    if value == "": # User skipped optional field
-                        break
-                    if not value:
-                        continue
-                    if "validation" in meta:
-                        valid, msg = validate(value, meta["validation"])
-                        if not valid:
-                            print(f"Invalid input for {key}: {msg}")
-                            continue
+        """
+        Collects the name of the template selected by the user.
+        """
+        choices = [
+                questionary.Choice(
+                    title=f"{name} - {meta.get('description', 'No description')}",
+                    value = name
+                    )
 
-                    inputs[key] = value
-                    break # Exit if we get a valid result
-            
-            # Post-pipeline summarisation
-            if self.platform == "defender":
-                self.include_post_pipeline = input(
-                        "Include summarization (post_pipeline)? [y/N]: ").strip().lower() == "y"
+                for name, meta in self.templates.items()
+                ] + [questionary.Choice("Quit", value="quit")]
 
+        template_name = questionary.select(
+                "Choose a template to use:",
+                choices=choices).ask()
+
+        if template_name in ("quit", None):
+            sys.exit(1)
+
+        template = self.templates[template_name]
+        print(f"\n{template.get('description', 'no help')}\n")
+
+        return template_name
+
+    def get_inputs(self, template) -> Dict[str,any]:
+        """
+        Collect optional input parameters from the user, with validation if defined.
+        Also asks for post-pipeline summarization if platform is Defender.
+
+        Arguments:
+        - template (str): template of the given platform
+        """
+
+        inputs = {}
+        for key, meta in template.get("optional_fields", {}).items():
             while True:
-                lookback = input("Time range (default '10 MINUTES'): ").strip()
-                if not lookback:
-                    lookback = "10 minutes"
-
-                duration = normalize_lookback(lookback, self.platform)
-
-                if duration is None:
-                    print("Invalid input")
+                value = input(f"{key} ({meta.get('help', '')}): ").strip()
+                if value == "": # User skipped optional field
+                    break
+                if not value:
                     continue
-                break
+                if "validation" in meta:
+                    valid, msg = validate(value, meta["validation"])
+                    if not valid:
+                        print(f"Invalid input for {key}: {msg}")
+                        continue
 
-            query = build_query(template, inputs, duration, self.platform, self.include_post_pipeline)
-            print("\nGenerated Query:\n")
-            print(query)
+                inputs[key] = value
+                break # Exit if we get a valid result
 
+        # Post-pipeline summarisation
+        if self.platform == "defender":
+            self.include_post_pipeline = input(
+                    "Include summarization (post_pipeline)? [y/N]: ").strip().lower() == "y"
+
+        return inputs 
+
+    def get_lookback(self) -> None:
+        """
+        Collect lookback data from the user for the search query
+        """
+
+        while True:
+            lookback = input("Time range (default '10 MINUTES'): ").strip()
+            if not lookback:
+                lookback = "10 minutes"
+
+            duration = normalize_lookback(lookback, self.platform)
+
+            if duration is None:
+                print("Invalid input")
+                continue
+            break
