@@ -1,11 +1,10 @@
 import questionary
 import sys
 
-from typing import List, Dict
+from typing import Dict
 
 from utils.utils import validate
 from utils.utils import normalize_lookback
-from utils.utils import choose_mode
 from utils.query_builder import build_query
 
 """
@@ -88,12 +87,16 @@ class QueryCli:
                         continue
 
                 inputs[key] = value
-                break # Exit if we get a valid result
+                break  
 
         # Post-pipeline summarisation
         if self.platform == "defender":
-            self.include_post_pipeline = input(
-                    "Include summarization (post_pipeline)? [y/N]: ").strip().lower() == "y"
+            while True:
+                choice = input("Include summarisation (post_pipeline)? [y/n]: ").strip().lower()
+                if choice in ("y", "n"):
+                    self.include_post_pipeline = (choice == "y")
+                    break
+                print("Please enter 'y' or 'n'.")
 
         return inputs 
 
@@ -113,3 +116,5 @@ class QueryCli:
                 print("Invalid input")
                 continue
             break
+
+        return duration

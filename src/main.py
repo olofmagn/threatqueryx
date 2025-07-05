@@ -26,7 +26,7 @@ BANNER= rf"""
 
 Welcome to the application! 
 Enjoy using the app, and feel free to share any feature requests or feedback!
-Version {VERSION}
+Version {VERSION} olofmagn
 """
 
 def main():

@@ -1,13 +1,8 @@
-"""
-A simple program that generates a search query based on a given list.
 
-Author: Olof Magnusson
-Date: 2025-06-22
+"""
+GUI Interface
 """
 
-import ipaddress
-import sys
-import os
 import tkinter as tk
 
 from tkinter import font
@@ -44,19 +39,21 @@ class QueryGui:
         self.update_field_visibility()
 
     def create_widgets(self):
+
         """
         Create and layout all necessary widgets with consistent styling
         """
-
         # === Platform Selector ===
         ttk.Label(self.frame, text="Platform:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
         self.platform_var = tk.StringVar(value=self.platform)
+
         self.platform_menu = ttk.Combobox(
             self.frame,
             textvariable=self.platform_var,
             state="readonly",
             values=[p.upper() for p in self.platforms]
         )
+
         self.platform_menu.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
         self.platform_menu.bind("<<ComboboxSelected>>", self.on_platform_change)
 
@@ -69,7 +66,6 @@ class QueryGui:
 
         # === Parameters Frame ===
         self.inputs_frame = ttk.LabelFrame(self.frame, text="Parameters")
-        #self.inputs_frame.grid(row=2, column=0, columnspan=3,  sticky="nsew", padx=5, pady=10)
 
         # Configure two columns: labels and entry widgets
         self.inputs_frame.columnconfigure(0, weight=1)
@@ -166,7 +162,7 @@ class QueryGui:
         else:
             self.checkbox.grid_forget()  # hide checkbox
 
-    def on_platform_change(self, event=None) -> None:
+    def on_platform_change(self, event: tk.Event = None) -> None:
 
         """
         Used to detect platform change so templates gets correctly loaded
@@ -200,6 +196,7 @@ class QueryGui:
         """
         for widget in self.inputs_frame.winfo_children():
             widget.destroy()
+
         self.param_rows.clear()  # clear stored refs
         self.fields.clear()
         self.output_text.delete("1.0", tk.END)
@@ -214,7 +211,7 @@ class QueryGui:
 
         name = self.template_var.get()
         if not name or name not in self.templates:
-            return
+            return 0
 
         template = self.templates[name]
 
@@ -242,6 +239,7 @@ class QueryGui:
             entry.grid(row=i, column=1, sticky="ew", padx=5, pady=2)
 
             self.param_rows.append((label, entry, entry_var))
+
             self.fields[field] = (
                 entry_var,
                 meta.get("validation") if isinstance(meta, dict) else None
@@ -277,7 +275,8 @@ class QueryGui:
 
                 if not valid:
                     messagebox.showerror("Invalid input", f"{field}: {msg}")
-                    return
+                    return 0
+
                 inputs[field] = value
         
         if self.platform == "defender":
