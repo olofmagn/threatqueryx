@@ -6,14 +6,16 @@ Cli interface
 import questionary
 import sys
 
-from typing import Dict
-
-from utils.utils import validate
-from utils.utils import normalize_lookback
-from utils.query_builder import build_query
-from utils.utils import resolve_platform_and_templates
-from utils.utils import load_templates
+from typing import Dict, Tuple
 from questionary import Separator
+
+from utils.configuration import validate
+from utils.configuration import normalize_lookback
+from utils.configuration import resolve_platform_and_templates
+from utils.configuration import load_templates
+
+from utils.query_builder import build_query
+
 
 class QueryCli:
     def __init__(self, platform: str, templates: Dict[str, any]) -> None:
@@ -39,7 +41,7 @@ class QueryCli:
         print("Generated query:\n")
         print(query)
 
-    def get_template(self) -> tuple [str, dict]:
+    def get_template(self) -> Tuple [str, dict]:
 
         """
         Collects the name of the template selected by the user.
@@ -136,7 +138,6 @@ class QueryCli:
                 lookback = "10 minutes"
 
             duration = normalize_lookback(lookback, self.platform)
-            print(duration)
 
             if duration is None:
                 print("Invalid input")

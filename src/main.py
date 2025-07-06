@@ -7,9 +7,9 @@ VERSION = "1.0.0"
 
 import tkinter as tk
 
-from utils.utils import parse_args
-from utils.utils import resolve_platform_and_templates
-from utils.utils import choose_mode
+from utils.configuration import parse_args
+from utils.configuration import resolve_platform_and_templates
+from utils.configuration import choose_mode
 
 from .cli import QueryCli
 from .gui import QueryGui

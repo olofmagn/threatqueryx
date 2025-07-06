@@ -9,9 +9,9 @@ from tkinter import font
 from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
 
-from utils.utils import load_templates
-from utils.utils import validate
-from utils.utils import normalize_lookback
+from utils.configuration import load_templates
+from utils.configuration import validate
+from utils.configuration import normalize_lookback
 from utils.query_builder import build_query
 
 class QueryGui:

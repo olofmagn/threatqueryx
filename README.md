@@ -19,7 +19,7 @@ The tool loads pre-defined YAML templates and allows you to select parameters su
 ├── docs
 │   ├── document.pdf
 │   ├── document.tex
-│   └── stix-test.png
+│   └── stix.png
 ├── pictures
 │   ├── app.png
 │   └── failed_logins_gui.png
@@ -34,8 +34,8 @@ The tool loads pre-defined YAML templates and allows you to select parameters su
 │   ├── elastic.yaml
 │   └── qradar.yaml
 └── utils
-    ├── query_builder.py
-    └── utils.py
+    ├── configuration.py
+    └── query_builder.py
 ```
 
 ##  Template Format (YAML)

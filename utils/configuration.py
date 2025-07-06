@@ -1,6 +1,6 @@
 
 """
-Utils functions
+Configuration functions
 """
 
 import os
