@@ -17,7 +17,7 @@ from utils.query_builder import build_query
 class QueryGui:
     TIME_RANGES = ["5 MINUTES", "10 MINUTES", "30 MINUTES", "1 HOUR", "3 HOURS", "12 HOURS", "1 DAY"] 
 
-    def __init__(self, root: tk.Tk):
+    def __init__(self, root: tk.Tk) -> None:
 
         """
         Initialization of UI
@@ -38,7 +38,7 @@ class QueryGui:
         self.create_widgets()
         self.update_field_visibility()
 
-    def create_widgets(self):
+    def create_widgets(self) -> None:
 
         """
         Create and layout all necessary widgets with consistent styling
@@ -124,7 +124,7 @@ class QueryGui:
         self.copyright_label = ttk.Label(
             self.frame, text="© 2025 olofmagn", font=("Segoe UI", 8, "italic"), foreground="gray50"
         )
-        self.copyright_label.grid(row=10, column=2, sticky="w", pady=(0, 10), padx=5)
+        self.copyright_label.grid(row=9, columnspan=2, column=2, sticky="w", pady=(0, 10), padx=5)
         
         # === Load templates initially ===
         self.load_templates_for_platform(self.platform)
@@ -201,7 +201,6 @@ class QueryGui:
         self.fields.clear()
         self.output_text.delete("1.0", tk.END)
 
-
     def render_fields(self, event=None) -> None:
 
         """
@@ -249,7 +248,6 @@ class QueryGui:
         ttk.Label(self.inputs_frame, text="").grid(
             row=len(optional_fields), column=0, columnspan=2, pady=(5, 0)
         )
-
 
     def generate(self) -> None:
 

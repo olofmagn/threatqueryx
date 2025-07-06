@@ -2,7 +2,7 @@
 A simple program that generates a search query based on a given list.
 
 Author: Olof Magnusson
-Date: 2025-06-18
+Date: 2025-07-05
 """
 
 VERSION = "1.0.0"

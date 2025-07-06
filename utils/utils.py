@@ -12,7 +12,7 @@ VALID_PLATFORMS = {
     "qradar": {"description": "IBM QRadar"}
 }
 
-def load_templates(platform: str) -> Dict:
+def load_templates(platform: str) -> Dict[str,any]:
 
     """
     Loads templates for the specified SIEM platform.
@@ -27,6 +27,7 @@ def load_templates(platform: str) -> Dict:
     try:
         with open(file_path, "r", encoding='utf-8') as f:
             templates = yaml.safe_load(f)
+            print(templates)
             return templates
     except FileNotFoundError:
         print(f"File not found. Check if you provided correct {file_path}")
@@ -115,7 +116,7 @@ def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: str) -
         platform = platform or "qradar"
         return platform, None
 
-def choose_mode():
+def choose_mode() -> str:
 
     """
     Choose between gui and CLI mode.

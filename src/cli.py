@@ -100,7 +100,7 @@ class QueryCli:
 
         return inputs 
 
-    def get_lookback(self) -> None:
+    def get_lookback(self) -> str:
         """
         Collect lookback data from the user for the search query
         """
@@ -111,6 +111,7 @@ class QueryCli:
                 lookback = "10 minutes"
 
             duration = normalize_lookback(lookback, self.platform)
+            print(duration)
 
             if duration is None:
                 print("Invalid input")
