@@ -93,6 +93,7 @@ class QueryGui:
 
         # Defender button for post_pipeline
         self.include_post_pipeline_var = tk.BooleanVar(value=False)
+
         self.checkbox = tk.Checkbutton(
                 self.frame, 
                 text="Include summarisation",
@@ -124,6 +125,7 @@ class QueryGui:
         self.copyright_label = ttk.Label(
             self.frame, text="© 2025 olofmagn", font=("Segoe UI", 8, "italic"), foreground="gray50"
         )
+
         self.copyright_label.grid(row=9, columnspan=2, column=2, sticky="w", pady=(0, 10), padx=5)
         
         # === Load templates initially ===

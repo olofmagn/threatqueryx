@@ -1,3 +1,8 @@
+
+"""
+Utils functions
+"""
+
 import os
 import sys
 import yaml
@@ -27,13 +32,12 @@ def load_templates(platform: str) -> Dict[str,any]:
     try:
         with open(file_path, "r", encoding='utf-8') as f:
             templates = yaml.safe_load(f)
-            print(templates)
             return templates
     except FileNotFoundError:
         print(f"File not found. Check if you provided correct {file_path}")
         sys.exit(1)
     except IOError as e:
-        print(f"I/O Error occured when reading{file_path}")
+        print(f"I/O Error occured when reading {file_path}")
         sys.exit(1)
 
 def validate(value: str, val_type: str) -> tuple[bool, str]:

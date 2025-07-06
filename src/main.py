@@ -1,8 +1,6 @@
-"""
-A simple program that generates a search query based on a given list.
 
-Author: Olof Magnusson
-Date: 2025-07-05
+"""
+Main runner
 """
 
 VERSION = "1.0.0"
@@ -31,7 +29,7 @@ Version {VERSION} olofmagn
 
 def main():
     print(BANNER)
-    # Check whether we should use cli or gui based on args (default gui)
+
     args = parse_args()
     mode= choose_mode()
     platform = None

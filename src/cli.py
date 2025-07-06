@@ -1,3 +1,8 @@
+
+"""
+Cli interface
+"""
+
 import questionary
 import sys
 
@@ -6,10 +11,9 @@ from typing import Dict
 from utils.utils import validate
 from utils.utils import normalize_lookback
 from utils.query_builder import build_query
-
-"""
-Provide an cli interface to specify the template and platform for search.
-"""
+from utils.utils import resolve_platform_and_templates
+from utils.utils import load_templates
+from questionary import Separator
 
 class QueryCli:
     def __init__(self, platform: str, templates: Dict[str, any]) -> None:
@@ -26,9 +30,7 @@ class QueryCli:
             print("No templates available.")
             sys.exit(1)
 
-        template_name = self.get_template()
-        template = self.templates[template_name]
-        print(f"\n{template.get('description', 'no help')}\n")
+        template_name, template = self.get_template()
 
         inputs = self.get_inputs(template)
         duration = self.get_lookback()
@@ -37,31 +39,42 @@ class QueryCli:
         print("Generated query:\n")
         print(query)
 
-    def get_template(self) -> str:
+    def get_template(self) -> tuple [str, dict]:
 
         """
         Collects the name of the template selected by the user.
+        Allows going back to platform selection and reloading templates.
+
         """
-        choices = [
+        while True:
+            choices = [
                 questionary.Choice(
                     title=f"{name} - {meta.get('description', 'No description')}",
-                    value = name
-                    )
+                    value=name
+                )
 
                 for name, meta in self.templates.items()
-                ] + [questionary.Choice("Quit", value="quit")]
+            ] + [
+                Separator("---"),
+                questionary.Choice("Go back to platform selection", value="back"),
+                questionary.Choice("Quit", value="quit")
+            ]
 
-        template_name = questionary.select(
+            template_name = questionary.select(
                 "Choose a template to use:",
-                choices=choices).ask()
+                choices=choices
+            ).ask()
 
-        if template_name in ("quit", None):
-            sys.exit(1)
+            if template_name in ("quit", None):
+                sys.exit(1)
 
-        template = self.templates[template_name]
-        print(f"\n{template.get('description', 'no help')}\n")
+            if template_name == "back":
+                self.platform, self.templates = resolve_platform_and_templates(mode="cli", platform=None)
+                continue  # Restart template selection loop
 
-        return template_name
+            template = self.templates[template_name]
+
+            return template_name, template
 
     def get_inputs(self, template) -> Dict[str,any]:
         """
@@ -69,19 +82,26 @@ class QueryCli:
         Also asks for post-pipeline summarization if platform is Defender.
 
         Arguments:
-        - template (str): template of the given platform
+        - template (str): template of the given platform.
+
+        Returns:
+        - Dict[str, any]: A dictionary of inputs.
         """
 
         inputs = {}
         for key, meta in template.get("optional_fields", {}).items():
             while True:
                 value = input(f"{key} ({meta.get('help', '')}): ").strip()
+
                 if value == "": # User skipped optional field
                     break
+
                 if not value:
                     continue
+
                 if "validation" in meta:
                     valid, msg = validate(value, meta["validation"])
+
                     if not valid:
                         print(f"Invalid input for {key}: {msg}")
                         continue
@@ -93,6 +113,7 @@ class QueryCli:
         if self.platform == "defender":
             while True:
                 choice = input("Include summarisation (post_pipeline)? [y/n]: ").strip().lower()
+
                 if choice in ("y", "n"):
                     self.include_post_pipeline = (choice == "y")
                     break
@@ -102,11 +123,15 @@ class QueryCli:
 
     def get_lookback(self) -> str:
         """
-        Collect lookback data from the user for the search query
+        Collect lookback data from the user for the search query.
+
+        Returns:
+        - str: A duration string of a lookback value.
         """
 
         while True:
             lookback = input("Time range (default '10 MINUTES'): ").strip()
+
             if not lookback:
                 lookback = "10 minutes"
 
