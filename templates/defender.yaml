@@ -39,7 +39,6 @@ firewall_block:
       validation: "integer"
   post_pipeline: "summarise count() by InitiatingProcessAccountUpn, DeviceName, RemoteUrl, Timestamp, DeviceId, ReportId"
 
-
 dns_exfiltration:
   description: "Look for long suspicious DNS queries that may indicate exfiltration."
   base: "DeviceNetworkEvents"

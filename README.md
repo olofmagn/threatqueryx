@@ -19,7 +19,7 @@ The tool loads pre-defined YAML templates and allows you to select parameters su
 ├── docs
 │   ├── document.pdf
 │   ├── document.tex
-│   └── stix-test.png
+│   └── stix.png
 ├── pictures
 │   ├── app.png
 │   └── failed_logins_gui.png
@@ -34,8 +34,8 @@ The tool loads pre-defined YAML templates and allows you to select parameters su
 │   ├── elastic.yaml
 │   └── qradar.yaml
 └── utils
-    ├── query_builder.py
-    └── utils.py
+    ├── configuration.py
+    └── query_builder.py
 ```
 
 ##  Template Format (YAML)
@@ -56,8 +56,9 @@ failed_logins:
       validation: "ip"
 ```
 
-Each template (e.g., `failed_logins`) defines the structure of a query, where `base` represents the foundational query logic. The `required_fields` specify mandatory parameters necessary to construct an effective query and are typically determined by the implementer during the template design phase. The `optional_fields` section allows the template to support additional user-defined input to customize the search. Each optional field may include a `pattern` (used for input validation) and a `help` text, which provides guidance on the field's purpose. This is particularly useful in CLI mode or automated workflows. For Defender queries, an optional `post_pipeline` allows you to toggle between raw event searches and structured, aggregated results (e.g., counts grouped by relevant fields). Finally, the `validation` block defines the backend checks to ensure the provided input adheres to expected formats or values. For more practical examples, see the `Usage` section. 
+Each template (e.g., `failed_logins`) defines the structure of a query, where `base` represents the foundational query logic. The `required_fields` specify mandatory parameters necessary to construct an effective query and are typically determined by the implementer during the template design phase. The `optional_fields` section allows the template to support additional user-defined input to customize the search. Each optional field may include a `pattern` (used for input validation) and a `help` text, which provides guidance on the field's purpose. This is particularly useful in CLI mode or automated workflows. For Defender queries, an optional `post_pipeline` allows you to toggle between raw event searches and structured, aggregated results (e.g., counts grouped by relevant fields). 
 
+Finally, the `validation` block defines the backend checks to ensure the provided input adheres to expected formats or values. For more practical examples, see the `Usage` section. 
 
 ## Adding New Templates
 To add a new template, simply append a new entry string using the same structure to the appropriate YAML file (e.g., templates/elastic.yaml). No code changes are required.

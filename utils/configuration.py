@@ -1,3 +1,8 @@
+
+"""
+Configuration functions
+"""
+
 import os
 import sys
 import yaml
@@ -12,7 +17,7 @@ VALID_PLATFORMS = {
     "qradar": {"description": "IBM QRadar"}
 }
 
-def load_templates(platform: str) -> Dict:
+def load_templates(platform: str) -> Dict[str,any]:
 
     """
     Loads templates for the specified SIEM platform.
@@ -32,7 +37,7 @@ def load_templates(platform: str) -> Dict:
         print(f"File not found. Check if you provided correct {file_path}")
         sys.exit(1)
     except IOError as e:
-        print(f"I/O Error occured when reading{file_path}")
+        print(f"I/O Error occured when reading {file_path}")
         sys.exit(1)
 
 def validate(value: str, val_type: str) -> tuple[bool, str]:
@@ -115,7 +120,7 @@ def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: str) -
         platform = platform or "qradar"
         return platform, None
 
-def choose_mode():
+def choose_mode() -> str:
 
     """
     Choose between gui and CLI mode.

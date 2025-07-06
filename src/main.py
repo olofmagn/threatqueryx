@@ -1,17 +1,15 @@
-"""
-A simple program that generates a search query based on a given list.
 
-Author: Olof Magnusson
-Date: 2025-06-18
+"""
+Main runner
 """
 
 VERSION = "1.0.0"
 
 import tkinter as tk
 
-from utils.utils import parse_args
-from utils.utils import resolve_platform_and_templates
-from utils.utils import choose_mode
+from utils.configuration import parse_args
+from utils.configuration import resolve_platform_and_templates
+from utils.configuration import choose_mode
 
 from .cli import QueryCli
 from .gui import QueryGui
@@ -26,12 +24,12 @@ BANNER= rf"""
 
 Welcome to the application! 
 Enjoy using the app, and feel free to share any feature requests or feedback!
-Version {VERSION}
+Version {VERSION} olofmagn
 """
 
 def main():
     print(BANNER)
-    # Check whether we should use cli or gui based on args (default gui)
+
     args = parse_args()
     mode= choose_mode()
     platform = None

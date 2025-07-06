@@ -38,9 +38,6 @@ dns_domains:
       pattern: "source.ip: '{value}'"
       help: "Source IP of suspicious DNS queries"
       validation: "ip"
-    destination_bytes:
-      pattern: "destination.bytes: '{value}'"
-      help: "Destination bytes in transmission"
 
 rce_attempts:
   description: "Detect potential remote command execution attempts in logs."
@@ -69,7 +66,7 @@ powershell_execution:
       help: "Username running PowerShell"
 
 rdp_loopback_traffic:
-  description: "Detect RDP (port 3389) traffic involving loopback addresses (127.0.0.0/8) using Event ID 5156."
+  description: "Detect RDP (port 3389) traffic involving loopback addresses (127.0.0.0/8) using event code 5156."
   base: "event.category: 'network'"
   required_fields:
   - "event.id: '5156'"
@@ -85,11 +82,11 @@ rdp_loopback_traffic:
   validation: "ip"
 
 builtin_account_enabled:
-  description: "Detect when built-in accounts like Guest, DefaultAccount, or Administrator are enabled (Event ID 4722)."
+  description: "Detect when built-in accounts like Guest, DefaultAccount, or Administrator are enabled using event code 4722."
   base: "event.category: 'authentication'"
   required_fields:
     - "event.code: '4722'"
-    - "(user.name: 'guest' or user.name: 'defaultaccount' OR user.name: 'administrator')"
+    - "(user.name: 'guest' or user.name: 'defaultaccount' or user.name: 'administrator')"
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
@@ -101,7 +98,7 @@ service_task_creation_commands:
   base: "event.category: 'process'"
   required_fields:
     - "event.id: 4688"
-    - '(process.command_line: *create* OR process.command_line: */SC* OR process.command_line: */TN*)'
+    - '(process.command_line: *create* or process.command_line: */SC* or process.command_line: */TN*)'
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
@@ -115,11 +112,11 @@ service_task_creation_commands:
       help: "Filter for commands containing specific strings"
 
 suspicious_command_flags:
-  description: "Detect process creation events with commands containing /transfer, /priority, or /download flags."
+  description: "Detect process creation events with commands containing /transfer, /priority, or /download flags using event code 4688."
   base: "event.category: 'process'"
   required_fields:
     - "event.id: '4688'"
-    - "(process.command_line: */transfer OR process.command_line: */priority OR process.command_line: */download)"
+    - "(process.command_line: */transfer or process.command_line: */priority or process.command_line: */download)"
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
