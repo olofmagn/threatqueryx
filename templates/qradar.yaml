@@ -63,8 +63,8 @@ rdp_loopback_traffic:
   base: "SELECT sourceip, sourceport, destinationip, destinationport FROM events"
   required_fields:
     - "eventid = 5156"
-    - "(sourceport = '3389' OR destinationport = '3389')"
-    - "(INCIDR('127.0.0.0/8', sourceip) OR INCIDR('127.0.0.0/8', destinationip))"
+    - "(sourceport = '3389' or destinationport = '3389')"
+    - "(INCIDR('127.0.0.0/8', sourceip) or INCIDR('127.0.0.0/8', destinationip))"
   optional_fields:
     source_ip:
       pattern: "sourceip= '{value}'"
@@ -89,15 +89,12 @@ builtin_account_enabled:
   required_fields:
     - "(logsourcetypename(devicetype) ILIKE '%Microsoft Windows Security Event Log%')"
     - "qidEventId = '4722'"
-    - "(username ILIKE 'guest' OR username ILIKE 'defaultaccount' OR username ILIKE 'administrator')"
+    - "(username ILIKE 'guest' or username ILIKE 'defaultaccount' or username ILIKE 'administrator')"
   optional_fields:
     source_ip:
       pattern: "sourceip = '{value}'"
       help: "Filter by source IP address"
       validation: "ip"
-    username:
-      pattern: "username ILIKE '{value}'"
-      help: "Filter by specific username (case-insensitive)"
 
 service_task_creation_commands:
   description: "Detect process creation events involving commands for service creation or scheduled tasks."
@@ -105,7 +102,7 @@ service_task_creation_commands:
   required_fields:
     - "(logsourcetypename(logsourceid) ILIKE 'Microsoft%')"
     - "qidEventId = '4688'"
-    - "(\"Command\" ILIKE 'create' OR \"Command\" ILIKE '/SC' OR \"Command\" ILIKE '/TN')"
+    - "(\"Command\" ILIKE 'create' or \"Command\" ILIKE '/SC' or \"Command\" ILIKE '/TN')"
   optional_fields:
     source_ip:
       pattern: "sourceip = '{value}'"
@@ -124,7 +121,7 @@ suspicious_command_flags:
   required_fields:
     - "(logsourcename(logsourceid) ILIKE 'Microsoft%')"
     - "qidEventId = '4688'"
-    - "(\"Command\" ILIKE '/transfer' OR \"Command\" ILIKE '/priority' OR \"Command\" ILIKE '/download')"
+    - "(\"Command\" ILIKE '/transfer' or \"Command\" ILIKE '/priority' or \"Command\" ILIKE '/download')"
   time_range: "LAST 5 DAYS"
   optional_fields:
     source_ip:

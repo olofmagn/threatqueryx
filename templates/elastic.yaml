@@ -41,10 +41,9 @@ dns_domains:
 
 rce_attempts:
   description: "Detect potential remote command execution attempts in logs."
-  base: "events"
+  base: "event.category: 'file'"
   required_fields:
-    - "event.category: file"
-    - "process.executable: '{value}'"
+    - "(process.command_line: 'Invoke-WebRequest' or process.command_line: 'IEX' or process.command_line: 'curl' or process.command_line: 'wget' or process.command_line: 'base64')"
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
@@ -53,17 +52,22 @@ rce_attempts:
     destination.ip:
       pattern: "destination.ip: '{value}'"
       help: "Destination IP of the exploit attempt"
+    process.executable:
+      pattern: "process.executable: '{value}'"
+      help: "Process executable of the exploit attempt"
 
 powershell_execution:
   description: "Find suspicious PowerShell execution events."
   base: "event.category: 'process'"
   required_fields:
     - "event.dataset: 'windows.powershell_operational'"
-    - "message: '{value}'"
   optional_fields:
     user.name:
       pattern: "user.name: '{value}'"
       help: "Username running PowerShell"
+    message:
+      pattern: "message: '{value}'"
+      help: "Message to filter on"
 
 rdp_loopback_traffic:
   description: "Detect RDP (port 3389) traffic involving loopback addresses (127.0.0.0/8) using event code 5156."

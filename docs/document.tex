@@ -19,7 +19,7 @@ Threat hunting is based on certain objectives that needs to be addressed. This e
 	It is important to identify what type of data are required for each threat hunting exercise. There are certain circumstances where we might want to specify certain directories in which known bad actors operates. There may be data categories such as authentication, process, or firewall that need to be explicitly queried.
     
 	\section*{How do you extract and validate that data?}
-	The searches can be done in platforms such as \texttt{Microsoft Defender}, \texttt{Elastic} or \texttt{QRadar} depending on the objective of the threat actor. From the data, we can identify things that are legitimate, unknown, bad or interesting. The findings can then be exported in formats such as \textit{csv} to visualize the results and support documentation.
+	The searches can be done in platforms such as \texttt{Microsoft Defender}, \texttt{Elastic} or \texttt{QRadar}. From the data, we can identify things that are legitimate, unknown, bad or interesting. The findings can then be exported in formats such as \textit{csv} to visualize the results and support documentation. Scripting can be a viable tool when the lookback period is extensive and requires efficient sorting.
 	\section*{What does the data tells you?}
 	Analyzing the collected data to determine what belongs and what doesn't is a crucial part of this stage of the hunt. Framing questions like: \textit{How often does this process runs in this environment} or \textit{Why does this process only occurs at domain controllers} aids the analyst to look into the data in several different viewpoints.
 	
