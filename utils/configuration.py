@@ -9,7 +9,7 @@ import yaml
 import ipaddress
 import re
 import questionary
-from typing import Dict, Literal
+from typing import Dict, Literal, Tuple
 
 VALID_PLATFORMS = {
     "defender": {"description": "Microsoft Defender for Endpoint"},
@@ -40,7 +40,7 @@ def load_templates(platform: str) -> Dict[str,any]:
         print(f"I/O Error occured when reading {file_path}")
         sys.exit(1)
 
-def validate(value: str, val_type: str) -> tuple[bool, str]:
+def validate(value: str, val_type: str) -> Tuple[bool, str]:
 
     """
     Validates a given value against a specific type
@@ -152,7 +152,7 @@ def normalize_lookback(lookback: str, platform) -> str:
     - str: A lookback value in the correct format for query iteration.
     """
     lookback = lookback.strip().lower()
-    match = re.match(r"(\d+)\s*(minutes?|hours?|days?)", lookback)
+    match = re.match(r"(\d+)\s*(minutes?|hours?|days?|min|m|h|d)", lookback, re.IGNORECASE)
 
     if not match:
         return None
@@ -160,17 +160,18 @@ def normalize_lookback(lookback: str, platform) -> str:
     value, unit = match.groups()
     value = int(value)
 
-    if value <=0: 
-        return None
+    # Positive values
+    if value <= 0:
+        value = 1
 
     is_defender_or_elastic = platform in ("defender", "elastic")
 
     match unit:
-        case "minute" | "minutes":
+        case "minute" | "minutes" | "min" | "m":
             return f"{value}m" if is_defender_or_elastic else f"{value} MINUTES"
-        case "hour" | "hours":
+        case "hour" | "hours" | "h":
             return f"{value}h" if is_defender_or_elastic else f"{value} HOURS"
-        case "day":
+        case "day" | "days" | "d":
             return f"{value*24}h" if is_defender_or_elastic else f"{value} DAYS"
         case _:
             return None

@@ -8,6 +8,7 @@ import tkinter as tk
 from tkinter import font
 from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
+from tkinter import StringVar
 
 from utils.configuration import load_templates
 from utils.configuration import validate
@@ -15,9 +16,13 @@ from utils.configuration import normalize_lookback
 from utils.query_builder import build_query
 
 class QueryGui:
-    TIME_RANGES = ["5 MINUTES", "10 MINUTES", "30 MINUTES", "1 HOUR", "3 HOURS", "12 HOURS", "1 DAY"] 
-
     def __init__(self, root: tk.Tk) -> None:
+        """
+        Internal/external time ranges
+        """
+
+        self.INTERNAL_TIME_RANGES = ["5m", "10m", "30m", "1h", "3h", "12h", "1d"]
+        self.DISPLAY_TIME_RANGES = ["5 MINUTES", "10 MINUTES", "30 MINUTES", "1 HOUR", "3 HOURS", "12 HOURS", "1 DAY"]
 
         """
         Initialization of UI
@@ -37,6 +42,11 @@ class QueryGui:
 
         self.create_widgets()
         self.update_field_visibility()
+
+        # Mapping internal <-> display
+        self.internal_to_display = dict(zip(self.INTERNAL_TIME_RANGES, self.DISPLAY_TIME_RANGES))
+        self.display_to_internal = dict(zip(self.DISPLAY_TIME_RANGES, self.INTERNAL_TIME_RANGES))
+
 
     def create_widgets(self) -> None:
 
@@ -81,7 +91,7 @@ class QueryGui:
         time_frame = ttk.Frame(self.frame)
         time_frame.grid(row=3, column=1, sticky="nsew", padx=5, pady=5)
 
-        self.lookback_var = tk.StringVar(value=self.TIME_RANGES[1])
+        self.lookback_var = tk.StringVar(value=self.DISPLAY_TIME_RANGES[1])
         self.time_entry = ttk.Entry(time_frame, textvariable=self.lookback_var, width=15)
         self.time_entry.pack(side="left")
 
@@ -149,7 +159,7 @@ class QueryGui:
                 return "Using Microsoft Defender query mode."
 
             case _:
-                return "Using unknown platform."
+                return None
 
     def update_field_visibility(self) -> None:
 
@@ -266,6 +276,10 @@ class QueryGui:
         lookback = self.lookback_var.get()
         duration = normalize_lookback(lookback, self.platform)
 
+        if duration is None:
+            messagebox.showerror("Error", "Invalid time range")
+            return 0
+
         inputs = {}
         for field, (var, validation_type) in self.fields.items():
             value = var.get().strip()
@@ -302,13 +316,23 @@ class QueryGui:
         messagebox.showinfo("Copied", "Query copied to clipboard!")
 
     def change_time_range(self, direction: int) -> None:
+        current = self.lookback_var.get().strip().upper()
 
-        """
-        Change time range based on the direction.
-        """
-        current = self.lookback_var.get()
+        if current in self.display_to_internal:
+            internal = self.display_to_internal[current]
+        else:
+            internal = current.lower()
 
-        if current in self.TIME_RANGES:
-            idx = self.TIME_RANGES.index(current)
-            new_idx = (idx + direction) % len(self.TIME_RANGES)
-            self.lookback_var.set(self.TIME_RANGES[new_idx])
+            if internal in self.internal_to_display:
+                pass
+            else:
+                internal = self.INTERNAL_TIME_RANGES[0]
+
+        # Find index in internal list for cycling
+        idx = self.INTERNAL_TIME_RANGES.index(internal)
+        new_idx = (idx + direction) % len(self.INTERNAL_TIME_RANGES)
+
+        # Update display label in entry
+        new_display = self.internal_to_display[self.INTERNAL_TIME_RANGES[new_idx]]
+        self.lookback_var.set(new_display)
+

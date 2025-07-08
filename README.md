@@ -85,7 +85,7 @@ python3 src.main
 
 Welcome to the application! 
 Enjoy using the app, and feel free to share any feature requests or feedback!
-Version 1.0.0
+Version 1.0.0 olofmagn
 
 ? Choose interface mode: (Use arrow keys)
    CLI (terminal)
@@ -116,7 +116,7 @@ python3 -m src.main
 
 Welcome to the application! 
 Enjoy using the app, and feel free to share any feature requests or feedback!
-Designed by Olof Magnusson (olofmagn)
+Version 1.0.0 olofmagn
 
 ? Choose interface mode: (Use arrow keys)
  » CLI (terminal)

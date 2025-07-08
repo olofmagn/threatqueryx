@@ -41,8 +41,8 @@ def main():
     platform, templates = resolve_platform_and_templates(mode, platform)
     
     if mode == "cli":
-        cli_test = QueryCli(platform, templates)
-        cli_test.build_query_for_cli()
+        cli = QueryCli(platform, templates)
+        cli.build_query_for_cli()
     else:
         root = tk.Tk()
         app = QueryGui(root)
