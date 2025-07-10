@@ -60,8 +60,7 @@ class QueryGui:
         self.platform_menu = ttk.Combobox(
             self.frame,
             textvariable=self.platform_var,
-            state="readonly",
-            values=[p.upper() for p in self.platforms]
+            values=[p for p in self.platforms]
         )
 
         self.platform_menu.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
@@ -70,7 +69,7 @@ class QueryGui:
         # === Template Selector ===
         ttk.Label(self.frame, text="Template:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
         self.template_var = tk.StringVar()
-        self.template_menu = ttk.Combobox(self.frame, textvariable=self.template_var, state="readonly")
+        self.template_menu = ttk.Combobox(self.frame, textvariable=self.template_var)
         self.template_menu.grid(row=1, column=1, sticky="ew", padx=5, pady=5)
         self.template_menu.bind("<<ComboboxSelected>>", self.render_fields)
 
