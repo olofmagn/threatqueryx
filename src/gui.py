@@ -135,7 +135,7 @@ class QueryGui:
             self.frame, text="© 2025 olofmagn", font=("Segoe UI", 8, "italic"), foreground="gray50"
         )
 
-        self.copyright_label.grid(row=9, columnspan=2, column=2, sticky="w", pady=(0, 10), padx=5)
+        self.copyright_label.grid(row=13, column=2, sticky="e", pady=(0, 10), padx=5)
         
         # === Load templates initially ===
         self.load_templates_for_platform(self.platform)
