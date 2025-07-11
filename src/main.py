@@ -46,7 +46,7 @@ def main():
     else:
         root = tk.Tk()
         app = QueryGui(root)
-        app.platform_var.set(platform.upper())
+        app.platform_var.set("qradar")
         app.load_templates_for_platform(platform)
         root.mainloop()
 

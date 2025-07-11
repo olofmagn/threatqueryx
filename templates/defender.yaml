@@ -46,7 +46,7 @@ dns_exfiltration:
     - "ActionType has_any('ConnectionBlocked', 'ConnectionAllowed')"
   optional_fields:
     source_ip:
-      pattern: 'RemoteUrl == "{value}"'
+      pattern: "RemoteUrl == '{value}'"
       help: "Source IP making the DNS request"
       validation: "ip"
   post_pipeline: "summarise count() by InitiatingProcessAccountUpn, DeviceName, RemoteUrl, Timestamp, DeviceId, ReportId"

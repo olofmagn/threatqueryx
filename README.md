@@ -13,29 +13,30 @@ The tool loads pre-defined YAML templates and allows you to select parameters su
 -  Platform-specific output (AQL, KQL, Elastic DSL).
 -  Validation of input fields (e.g., IPs, integers).
 
-## Project structure
+## File structure
 ```
 .
 ├── docs
-│   ├── document.pdf # pdf on threat-hunting guidelines
-│   ├── document.tex # source
+│   ├── document.pdf
+│   ├── document.tex
 │   └── stix.png
 ├── pictures
 │   ├── app.png
 │   └── failed_logins_gui.png
 ├── README.md
 ├── src
-│   ├── cli.py # cli interface
-│   ├── gui.py # gui interface
+│   ├── cli.py
+│   ├── gui.py
 │   ├── __init__.py
-│   └── main.py # main runner
+│   └── main.py
 ├── templates
 │   ├── defender.yaml
 │   ├── elastic.yaml
 │   └── qradar.yaml
 └── utils
-    ├── configuration.py # config
-    └── query_builder.py # query builder
+    ├── configuration.py
+    └── generate_queries.py
+
 ```
 
 ##  Template Format (YAML)
