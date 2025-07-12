@@ -113,7 +113,7 @@ service_task_creation_commands:
       help: "Filter by username"
     command_contains:
       pattern: "\"Command\" ILIKE '%{value}%'"
-      help: "Filter for commands containing specific strings"
+      help: "Filter for commands"
 
 suspicious_command_flags:
   description: "Detect process creation events with commands containing /transfer, /priority, or /download flags."
@@ -133,7 +133,7 @@ suspicious_command_flags:
       help: "Filter by username"
     command_contains:
       pattern: "\"Command\" ILIKE '%{value}%'"
-      help: "Filter for commands containing specific strings"
+      help: "Filter for commands"
 
 dns_txt_base64_payloads:
   description: "Detect Suspicious DNS requests."

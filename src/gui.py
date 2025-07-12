@@ -3,23 +3,26 @@
 GUI Interface
 """
 
-import re
+import re 
 import tkinter as tk
 
 from typing import List, Optional
 
-from tkinter import font
-from tkinter import ttk, messagebox
+from tkinter import ttk, font, messagebox, StringVar
 from tkinter.scrolledtext import ScrolledText
-from tkinter import StringVar
 
-from utils.configuration import load_templates
-from utils.configuration import validate
-from utils.configuration import normalize_lookback
+from utils.configuration import load_templates, validate, normalize_lookback
 from utils.generate_queries import build_query
 
 class QueryGui:
     def __init__(self, root: tk.Tk) -> None:
+        """
+        Initialize the main application window and its widgets.
+
+        Args:
+        - root (tk.Tk): The root Tkinter window passed by the caller.
+        """
+
         """
         Internal/external time ranges
         """
@@ -54,10 +57,10 @@ class QueryGui:
     def _create_widgets(self) -> None:
 
         """
-        Create and layout all necessary widgets with consistent styling
+        Create and layout all necessary widgets with consistent styling.
         """
         # === Platform Selector ===
-        ttk.Label(self.frame, text="Platform:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        ttk.Label(self.frame, text="Platform:").grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
         self.platform_var = tk.StringVar(value=self.platform)
 
         self.platform_menu = ttk.Combobox(
@@ -67,17 +70,15 @@ class QueryGui:
             state = "readonly"
         )
 
-        self.platform_menu.grid(row=0, column=1, sticky="ew", padx=5, pady=5)
+        self.platform_menu.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
         self.platform_menu.bind("<<ComboboxSelected>>", self._on_platform_change)
 
         # === Template Selector ===
-        ttk.Label(self.frame, text="Template:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        ttk.Label(self.frame, text="Template:").grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
         self.template_var = tk.StringVar()
         self.autocomplete_entry = ttk.Combobox(self.frame, textvariable=self.template_var)
-        self.autocomplete_entry.grid(row=1, column=1, sticky="ew", padx=5, pady=5)
+        self.autocomplete_entry.grid(row=1, column=1, sticky="nsew", padx=5, pady=5)
         self.autocomplete_entry.bind("<<ComboboxSelected>>", self._render_fields)
-
-        # Setup autocomplete
         self._setup_template_autocomplete()
 
         # === Parameters Frame ===
@@ -102,10 +103,10 @@ class QueryGui:
         self.time_entry.pack(side="left")
 
         self.btn_time_prev = ttk.Button(time_frame, text="❮", width=2, command=lambda: self._change_time_range(-1))
-        self.btn_time_prev.pack(side="left", padx=2)
+        self.btn_time_prev.pack(side="left", padx=5)
 
         self.btn_time_next = ttk.Button(time_frame, text="❯", width=2, command=lambda: self._change_time_range(1))
-        self.btn_time_next.pack(side="left", padx=2)
+        self.btn_time_next.pack(side="left", padx=5)
 
         # Defender button for post_pipeline
         self.include_post_pipeline_var = tk.BooleanVar(value=False)
@@ -118,7 +119,7 @@ class QueryGui:
 
         # === Generate Button ===
         btn = ttk.Button(self.frame, text="Generate Query", command=self.generate)
-        btn.grid(row=6, column=0, columnspan=2, pady=10, sticky="ew", padx=5)
+        btn.grid(row=6, column=0, columnspan=2, pady=10, sticky="nsew", padx=5)
 
         # === Output Text Box ===
         self.output_text = ScrolledText(self.frame, height=10, wrap=tk.WORD)
@@ -145,12 +146,15 @@ class QueryGui:
         self.copyright_label.grid(row=13, column=2, sticky="e", pady=(0, 10), padx=5)
         
         # === Load templates initially ===
-        self._load_templates_for_platform(self.platform)
+        self.load_templates_for_platform(self.platform)
 
     def _get_platform_info_text(self) -> str:
 
         """
-        Get the current platform in use and returns a str of the SIEM in use.
+        Get the current platform in use.
+
+        Returns:
+        - str: The display platform in use.
         """
         platform = self.platform_var.get()
 
@@ -187,16 +191,19 @@ class QueryGui:
         Used to detect platform change so templates gets correctly loaded
         """
         plat = self.platform_var.get()
-        if plat != self.platform:
+        if plat: 
             self.platform = plat
-            self._load_templates_for_platform(plat)
+            self.load_templates_for_platform(plat)
 
         self._update_field_visibility()
 
-    def _load_templates_for_platform(self, platform: str) -> None: 
+    def load_templates_for_platform(self, platform: str) -> None: 
 
         """
         Loads templates for a given platform
+
+        Args:
+        - platform: the platform, e.g., 'qradar', 'defender' or 'elastic'.
         """
         try:
             self.templates = load_templates(platform)
@@ -223,7 +230,10 @@ class QueryGui:
     def _render_fields(self, event: Optional[tk.Event] = None) -> None:
 
         """
-        Renders fields based on events
+        Renders fields event handler.
+
+        Args:
+        - event (Optional[tk.Event]): The Tkinter event that triggered the handler.
         """
         self._clear_fields()
 
@@ -232,7 +242,7 @@ class QueryGui:
         optional_fields = template.get("optional_fields", {})
 
         if optional_fields:
-            self.inputs_frame.grid(row=3, column=0, columnspan=3, sticky="nsew", padx=5, pady=10)
+            self.inputs_frame.grid(row=3, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
 
         else:
             self.inputs_frame.grid_remove()
@@ -246,13 +256,14 @@ class QueryGui:
 
             if help_text:
                 label_text += f" ({help_text})"
-
+            
+            # Optional fields layout
             label = ttk.Label(self.inputs_frame, text=label_text + ":")
             entry_var = tk.StringVar()
             entry = ttk.Entry(self.inputs_frame, textvariable=entry_var)
 
-            label.grid(row=i, column=0, sticky="w", padx=5, pady=2)
-            entry.grid(row=i, column=1, sticky="ew", padx=5, pady=2)
+            label.grid(row=i, column=0, sticky="nsew", padx=5, pady=5)
+            entry.grid(row=i, column=1, sticky="nsew", padx=5, pady=5)
 
             self.param_rows.append((label, entry, entry_var))
 
@@ -260,15 +271,11 @@ class QueryGui:
                 entry_var,
                 meta.get("validation") if isinstance(meta, dict) else None
             )
-
-        # Add spacer row after all input rows
-        ttk.Label(self.inputs_frame, text="").grid(
-            row=len(optional_fields), column=0, columnspan=2, pady=(5, 0)
-        )
-
+    
+    # === Search/template computing oriented logic here ===
     def generate(self) -> None:
         """
-        Builds an query
+        Builds an query for a given platform.
         """
 
         # Normalize
@@ -276,11 +283,6 @@ class QueryGui:
         platform = self.platform_var.get().lower()
 
         lookback = self.lookback_var.get()
-
-        # Not possible but if use not readonly this solves
-        if not platform or platform not in self.platforms:
-            messagebox.showerror("Error", "Invalid platform choice")
-            return 0
 
         if not template_name or template_name not in self.templates:
             messagebox.showerror("Error", "Invalid template choice.")
@@ -347,15 +349,24 @@ class QueryGui:
         # Update display label in entry
         new_display = self.internal_to_display[self.INTERNAL_TIME_RANGES[new_idx]]
         self.lookback_var.set(new_display)
-
-
+    
+    # === Event handlers ====
     def _setup_template_autocomplete(self) -> None:
+        """
+        Setup autocomplete
+        """
+
         self.listbox = None
 
-        def _on_select_commit(event: Optional[tk.Event] = None) -> None:
+        def _on_select_commit(event: Optional[tk.Event] = None) -> str:
+            """
+            Handler for when a suggestion is selected from the listbox.
+
+            Args:
+            - event (Optional[tk.Event]): The Tkinter event that triggered the handler.
+            """
 
             if self.listbox and self.listbox.curselection():
-
                 try:
                     index= self.listbox.curselection()[0]
                     selected = self.listbox.get(index)
@@ -373,16 +384,24 @@ class QueryGui:
             self.autocomplete_entry.icursor(tk.END)
             return "break"
 
-        def _update_suggestions(event: Optional[tk.Event] = None) -> None:
+        def _update_suggestions(event: Optional[tk.Event] = None) -> str:
+            """
+            Handler for update suggestions
+
+            Args:
+            - event (Optional[tk.Event]): The Tkinter event that triggered the handler.
+            """
+
             typed = self.template_var.get().lower()
-            matches = self._fuzzy_match(typed, list(self.templates.keys()))
+            # Show all if nothing is explictly typed.
+            matches = self._fuzzy_match(typed, list(self.templates.keys())) if typed else list(self.templates.keys())
 
             if self.listbox:
                 self.listbox.destroy()
                 self.listbox = None
 
-            if not typed or not matches:
-                return
+            if not matches:
+                return "break"
 
             self.listbox = tk.Listbox(self.frame, height=min(5, len(matches)))
             self.listbox.grid(row=2, column=1, sticky="ew", pady=5, padx=5)
@@ -394,11 +413,33 @@ class QueryGui:
             self.listbox.activate(0)
             
             self.listbox.bind("<ButtonRelease-1>", _on_select_commit)
-            self.listbox.bind("<Return>", on_return)
+            self.listbox.bind("<Return>", _on_return)
+            self.listbox.bind("Escape", _hide_listbox)
 
-        def _on_listbox_nav(event: Optional[tk.Event] = None) -> None:
+            return "break"
+
+        def _hide_listbox(self, event: Optional[tk.Event] = None) -> str:
+            """
+            Handler for escaping.
+
+            Args:
+            - event (Optional[tk.Event]): The Tkinter event that triggered the handler.
+            """
+            if self.listbox:
+                self.listbox.destroy()
+                self.listbox = None
+            return "break"
+
+        def _on_listbox_nav(event: Optional[tk.Event] = None) -> str:
+            """
+            Handler for navigating the autocomplete listbox using keyboard arrows.
+
+            Args:
+            - event (Optional[tk.Event]): The Tkinter event that triggered the handler.
+            """
+
             if not self.listbox:
-                return
+                return "break"
 
             curr = self.listbox.curselection()
             total = self.listbox.size()
@@ -411,7 +452,7 @@ class QueryGui:
             direction = {"Up": -1, "Down": -1}.get(event.keysym)
 
             if direction is None:
-                return 0
+                return "break"
 
             next_index = (current_index + direction) % total
 
@@ -422,13 +463,28 @@ class QueryGui:
             return "break"
 
         def _on_return(event: Optional[tk.Event] = None) -> str: 
+            """
+            Handler for the Return (Enter) key press event.
+
+            Args:
+            - event (Optional[tk.Event]): The Tkinter event that triggered the handler.
+
+            Returns:
+            - str: "break" to prevent default behavior.
+            """
+
             return _on_select_commit()
+
+        def _on_escape(event: Optional[tk.Event] = None) -> str:
+            if self.listbox:
+                self.listbox.destroy()
+                self.listbox = None
+            return "break"
 
         self.autocomplete_entry.bind("<Return>", _on_return)
         self.autocomplete_entry.bind("<KeyRelease>", _update_suggestions)
         self.autocomplete_entry.bind("<Down>", _on_listbox_nav)
         self.autocomplete_entry.bind("<Up>", _on_listbox_nav)
-        self.autocomplete_entry.bind("<FocusIn>", _update_suggestions)
 
     def _fuzzy_match(self, input_text: str, options: List[str]) -> List[str]:
 

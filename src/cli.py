@@ -23,7 +23,7 @@ class QueryCli:
         self.templates = templates
         self.include_post_pipeline = False
 
-    def _build_query_for_cli(self) -> None:
+    def build_query_for_cli(self) -> None:
         
         """
         Build query for cli given template, inputs, duration, platform and post_pipeline.
