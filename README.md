@@ -24,6 +24,7 @@ The tool loads pre-defined YAML templates and allows you to select parameters su
 │   ├── app.png
 │   └── failed_logins_gui.png
 ├── README.md
+├── requirements.txt
 ├── src
 │   ├── cli.py
 │   ├── gui.py
@@ -36,10 +37,13 @@ The tool loads pre-defined YAML templates and allows you to select parameters su
 └── utils
     ├── configuration.py
     └── generate_queries.py
-
 ```
 
-##  Template Format (YAML)
+## Requirements
+- Python >= 3.0.
+- External dependencies as listed in `requirements.txt`.
+
+## Template Format (YAML)
 ```yaml
 failed_logins:
   description: "Search for authentication failures with optional filters."
@@ -62,8 +66,9 @@ Each template (e.g., `failed_logins`) defines the structure of a query, where `b
 Each `optional_fields` must include a `pattern` (used for input validation) and a `help` text, which provides guidance on the field's purpose. This is particularly useful in CLI mode or automated workflows. For Defender queries, an optional `post_pipeline` allows you to toggle between raw event searches and structured, aggregated results (e.g., counts grouped by relevant fields). 
 
 Finally, the `validation` block, defines the backend checks to ensure the provided input adheres to expected formats or values. For more practical examples, see the `Usage` section. 
-## Adding New Templates
-To add a new template, simply append a new entry string using the same structure to the appropriate YAML file (e.g., templates/elastic.yaml). No code changes are required.
+
+### Adding New Templates
+To add a new template, simply append a new entry string using the same structure to the appropriate YAML file (e.g., templates/elastic.yaml). No code changes are required
 
 ##  Pending Features
 - Add integration with a yamlbuilder to automate threat-hunting templates using ML/AI on a local setup.
