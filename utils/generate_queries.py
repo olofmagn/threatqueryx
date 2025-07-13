@@ -32,6 +32,7 @@ def build_query(template: str, inputs: str, duration: int, platform: str, includ
         case "defender":
             condition_string = ' and '.join(conditions) if conditions else "true"
             query = f"{base} \n | where {condition_string} \n | where Timestamp > ago({duration})"
+
             # Search for both structured/raw events depending on user input
             if include_post_pipeline and "post_pipeline" in template:
                 query += f"\n | {template['post_pipeline']}"

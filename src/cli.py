@@ -14,7 +14,7 @@ from utils.configuration import normalize_lookback
 from utils.configuration import resolve_platform_and_templates
 from utils.configuration import load_templates
 
-from utils.query_builder import build_query
+from utils.generate_queries import build_query
 
 
 class QueryCli:
@@ -32,16 +32,16 @@ class QueryCli:
             print("No templates available.")
             sys.exit(1)
 
-        template_name, template = self.get_template()
+        template_name, template = self._get_template()
 
-        inputs = self.get_inputs(template)
-        duration = self.get_lookback()
+        inputs = self._get_inputs(template)
+        duration = self._get_lookback()
 
         query = build_query(template, inputs, duration, self.platform, self.include_post_pipeline)
         print("Generated query:\n")
         print(query)
 
-    def get_template(self) -> Tuple [str, dict]:
+    def _get_template(self) -> Tuple [str, dict]:
 
         """
         Collects the name of the template selected by the user.
@@ -78,7 +78,7 @@ class QueryCli:
 
             return template_name, template
 
-    def get_inputs(self, template) -> Dict[str,any]:
+    def _get_inputs(self, template) -> Dict[str,any]:
         """
         Collect optional input parameters from the user, with validation if defined.
         Also asks for post-pipeline summarization if platform is Defender.
@@ -123,7 +123,7 @@ class QueryCli:
 
         return inputs 
 
-    def get_lookback(self) -> str:
+    def _get_lookback(self) -> str:
         """
         Collect lookback data from the user for the search query.
 
