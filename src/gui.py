@@ -26,7 +26,6 @@ class QueryGui:
         """
         Internal/external time ranges
         """
-
         self.INTERNAL_TIME_RANGES = ["5m", "10m", "30m", "1h", "3h", "12h", "1d"]
         self.DISPLAY_TIME_RANGES = ["5 MINUTES", "10 MINUTES", "30 MINUTES", "1 HOUR", "3 HOURS", "12 HOURS", "1 DAY"]
 
@@ -55,10 +54,10 @@ class QueryGui:
         self.display_to_internal = dict(zip(self.DISPLAY_TIME_RANGES, self.INTERNAL_TIME_RANGES))
 
     def _create_widgets(self) -> None:
-
         """
         Create and layout all necessary widgets with consistent styling.
         """
+
         # === Platform Selector ===
         ttk.Label(self.frame, text="Platform:").grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
         self.platform_var = tk.StringVar(value=self.platform)
@@ -149,13 +148,13 @@ class QueryGui:
         self.load_templates_for_platform(self.platform)
 
     def _get_platform_info_text(self) -> str:
-
         """
         Get the current platform in use.
 
         Returns:
         - str: The display platform in use.
         """
+
         platform = self.platform_var.get()
 
         match platform:
@@ -172,10 +171,10 @@ class QueryGui:
                 return None
 
     def _update_field_visibility(self) -> None:
-
         """
         Update field visiblity info label for all platforms
         """
+
         self.platform_info_label.config(text=self._get_platform_info_text())
 
 
@@ -186,25 +185,30 @@ class QueryGui:
             self.checkbox.grid_forget()  # hide checkbox
 
     def _on_platform_change(self, event: tk.Event = None) -> None:
-
         """
         Used to detect platform change so templates gets correctly loaded
         """
+
         plat = self.platform_var.get()
         if plat: 
             self.platform = plat
             self.load_templates_for_platform(plat)
+        
+        # Clear the template input field and hide suggestions
+        self.template_var.set("")
+        if self.listbox:
+            self._hide_listbox()
 
         self._update_field_visibility()
 
     def load_templates_for_platform(self, platform: str) -> None: 
-
         """
         Loads templates for a given platform
 
         Args:
         - platform: the platform, e.g., 'qradar', 'defender' or 'elastic'.
         """
+
         try:
             self.templates = load_templates(platform)
         except Exception as e:
@@ -216,10 +220,10 @@ class QueryGui:
         self._clear_fields()
 
     def _clear_fields(self) -> None:
-
         """
         Destroy all parameter widgets and clear state.
         """
+
         for widget in self.inputs_frame.winfo_children():
             widget.destroy()
 
@@ -228,13 +232,13 @@ class QueryGui:
         self.output_text.delete("1.0", tk.END)
 
     def _render_fields(self, event: Optional[tk.Event] = None) -> None:
-
         """
         Renders fields event handler.
 
         Args:
         - event (Optional[tk.Event]): The Tkinter event that triggered the handler.
         """
+
         self._clear_fields()
 
         name = self.template_var.get()
@@ -272,28 +276,28 @@ class QueryGui:
                 meta.get("validation") if isinstance(meta, dict) else None
             )
     
-    # === Search/template computing oriented logic here ===
+    # === Search/template oriented logic here ===
     def generate(self) -> None:
         """
         Builds an query for a given platform.
         """
 
         # Normalize
-        template_name = self.template_var.get().lower()
+        template_name = self.template_var.get().lower().strip()
         platform = self.platform_var.get().lower()
 
         lookback = self.lookback_var.get()
 
         if not template_name or template_name not in self.templates:
             messagebox.showerror("Error", "Invalid template choice.")
-            return 0
+            return "break"
 
         template = self.templates[template_name]
         duration = normalize_lookback(lookback, self.platform)
 
         if duration is None:
             messagebox.showerror("Error", "Invalid time range")
-            return 0
+            return "break"
 
         inputs = {}
         for field, (var, validation_type) in self.fields.items():
@@ -304,7 +308,7 @@ class QueryGui:
 
                 if not valid:
                     messagebox.showerror("Invalid input", f"{field}: {msg}")
-                    return 0
+                    return "break"
 
                 inputs[field] = value
 
@@ -318,10 +322,10 @@ class QueryGui:
             messagebox.showerror("Build Error", str(e))
 
     def _copy(self) -> None:
-
         """
         Copy query to clipboard
         """
+
         query = self.output_text.get("1.0", tk.END).strip()
         self.root.clipboard_clear()
         self.root.clipboard_append(query)
@@ -349,7 +353,20 @@ class QueryGui:
         # Update display label in entry
         new_display = self.internal_to_display[self.INTERNAL_TIME_RANGES[new_idx]]
         self.lookback_var.set(new_display)
-    
+
+    def _hide_listbox(self, event: Optional[tk.Event] = None) -> str:
+        """
+        Hides the suggestion listbox if it exists.
+
+        Args:
+            event (Optional[tk.Event]): The Tkinter event that triggered the action.
+        """
+
+        if self.listbox:
+            self.listbox.destroy()
+            self.listbox = None
+        return "break"
+        
     # === Event handlers ====
     def _setup_template_autocomplete(self) -> None:
         """
@@ -376,8 +393,7 @@ class QueryGui:
                     pass
 
             if self.listbox:
-                self.listbox.destroy()
-                self.listbox = None
+                self._hide_listbox()
 
             # Refocus entry for further typing
             self.autocomplete_entry.focus_set()
@@ -397,9 +413,8 @@ class QueryGui:
             matches = self._fuzzy_match(typed, list(self.templates.keys())) if typed else list(self.templates.keys())
 
             if self.listbox:
-                self.listbox.destroy()
-                self.listbox = None
-
+                self._hide_listbox()
+                
             if not matches:
                 return "break"
 
@@ -414,20 +429,8 @@ class QueryGui:
             
             self.listbox.bind("<ButtonRelease-1>", _on_select_commit)
             self.listbox.bind("<Return>", _on_return)
-            self.listbox.bind("Escape", _hide_listbox)
+            self.listbox.bind("Escape", self._hide_listbox)
 
-            return "break"
-
-        def _hide_listbox(self, event: Optional[tk.Event] = None) -> str:
-            """
-            Handler for escaping.
-
-            Args:
-            - event (Optional[tk.Event]): The Tkinter event that triggered the handler.
-            """
-            if self.listbox:
-                self.listbox.destroy()
-                self.listbox = None
             return "break"
 
         def _on_listbox_nav(event: Optional[tk.Event] = None) -> str:
@@ -475,19 +478,13 @@ class QueryGui:
 
             return _on_select_commit()
 
-        def _on_escape(event: Optional[tk.Event] = None) -> str:
-            if self.listbox:
-                self.listbox.destroy()
-                self.listbox = None
-            return "break"
-
         self.autocomplete_entry.bind("<Return>", _on_return)
         self.autocomplete_entry.bind("<KeyRelease>", _update_suggestions)
         self.autocomplete_entry.bind("<Down>", _on_listbox_nav)
         self.autocomplete_entry.bind("<Up>", _on_listbox_nav)
 
-    def _fuzzy_match(self, input_text: str, options: List[str]) -> List[str]:
 
+    def _fuzzy_match(self, input_text: str, options: List[str]) -> List[str]:
         """
         Args:
         - input_text (str): An input string.
@@ -497,6 +494,7 @@ class QueryGui:
         - A list of options that contain all characters in order from input_text.
 
         """
+
         return [opt for opt in options if self._is_subsequence(input_text, opt)]
 
 
