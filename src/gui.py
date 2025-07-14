@@ -452,7 +452,7 @@ class QueryGui:
 
             current_index = curr[0] if curr else -1
 
-            direction = {"Up": -1, "Down": -1}.get(event.keysym)
+            direction = {"Up": -1, "Down": +1}.get(event.keysym)
 
             if direction is None:
                 return "break"
