@@ -6,6 +6,7 @@ Main runner
 VERSION = "1.0.0"
 
 import tkinter as tk
+import sys
 
 from utils.configuration import parse_args
 from utils.configuration import resolve_platform_and_templates
@@ -30,11 +31,10 @@ Version {VERSION} olofmagn
 def main():
     print(BANNER)
 
-    args = parse_args()
     mode= choose_mode()
     platform = None
     
-    # Early exit
+    # Early exit for quit/cancel
     if mode in ("quit", None):
         sys.exit(1)
 
@@ -46,7 +46,7 @@ def main():
     else:
         root = tk.Tk()
         app = QueryGui(root)
-        app.platform_var.set("qradar")
+        app.platform_var.set(platform)
         app.load_templates_for_platform(platform)
         root.mainloop()
 
