@@ -23,6 +23,9 @@ class QueryGui:
         - root (tk.Tk): The root Tkinter window passed by the caller.
         """
 
+        # Template loading
+        self.template_cache = {}
+
         """
         Internal/external time ranges
         """
@@ -209,8 +212,13 @@ class QueryGui:
         - platform: the platform, e.g., 'qradar', 'defender' or 'elastic'.
         """
 
+        if platform in self.template_cache:
+            self.templates = self.template_cache[platform]
+            return 
+
         try:
             self.templates = load_templates(platform)
+            self.template_cache[platform] = self.templates
         except Exception as e:
             messagebox.showerror("Error loading templates", str(e))
             self.templates = {}
