@@ -443,12 +443,10 @@ class QueryGui:
 
         if current in self.display_to_internal:
             internal = self.display_to_internal[current]
-        else:
+        elif current.lower() in self.internal_to_display:
             internal = current.lower()
-            if internal in self.internal_to_display:
-                pass
-            else:
-                internal = self.INTERNAL_TIME_RANGES[0]
+        else:
+            internal = self.INTERNAL_TIME_RANGES[0]
 
         # Find index in internal list for cycling
         idx = self.INTERNAL_TIME_RANGES.index(internal)
