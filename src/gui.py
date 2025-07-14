@@ -23,6 +23,11 @@ class QueryGui:
         - root (tk.Tk): The root Tkinter window passed by the caller.
         """
 
+        # Constants
+        MIN_WIDTH = 500
+        MIN_HEIGHT = 400
+        OUTPUT_HEIGHT = 10
+
         # Template loading
         self.template_cache = {}
 
@@ -37,7 +42,7 @@ class QueryGui:
         """
         self.root = root
         self.root.title("ThreatQueryX - Multi-Platform Threat Hunting Query Builder")
-        self.root.minsize(500,400) # Optional minimum size
+        self.root.minsize(MIN_WIDTH,MIN_HEIGHT) # Optional minimum size
         self.root.resizable(False, False)
 
         self.platforms = ["qradar", "defender", "elastic"]
@@ -124,7 +129,7 @@ class QueryGui:
         btn.grid(row=6, column=0, columnspan=2, pady=10, sticky="nsew", padx=5)
 
         # === Output Text Box ===
-        self.output_text = ScrolledText(self.frame, height=10, wrap=tk.WORD)
+        self.output_text = ScrolledText(self.frame, height=OUTPUT_HEIGHT, wrap=tk.WORD)
         self.output_text.grid(row=7, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
 
         # === Copy Button ===
