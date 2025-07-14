@@ -7,7 +7,7 @@ import tkinter as tk
 
 from typing import List, Optional
 
-from tkinter import ttk, font, messagebox, StringVar
+from tkinter import ttk, messagebox, StringVar
 from tkinter.scrolledtext import ScrolledText
 
 from utils.configuration import load_templates, validate, normalize_lookback
@@ -21,7 +21,6 @@ class QueryGui:
     OUTPUT_HEIGHT = 10
 
     def __init__(self, root: tk.Tk) -> None:
-
         """
         Initialize the main application window and its widgets.
 
@@ -41,7 +40,7 @@ class QueryGui:
         """
         self.root = root
         self.root.title("ThreatQueryX - Multi-Platform Threat Hunting Query Builder")
-        self.root.minsize(self.MIN_WIDTH,self.MIN_HEIGHT) # Optional minimum size
+        self.root.minsize(self.MIN_WIDTH, self.MIN_HEIGHT) # Optional minimum size
         self.root.resizable(False, False)
 
         self.platforms = ["qradar", "defender", "elastic"]
@@ -275,7 +274,7 @@ class QueryGui:
         self.platform_info_label.config(text=self._get_platform_info_text())
 
         if self.platform.lower() == "defender":
-            self.checkbox.grid(row=5, column=0, columnspan=2,padx=5, pady=5, sticky="nsew")
+            self.checkbox.grid(row=5, column=0, columnspan=2 ,padx=5, pady=5, sticky="nsew")
         else:
             self.checkbox.grid_forget()  # hide checkbox
 
@@ -379,14 +378,14 @@ class QueryGui:
 
         if not template_name or template_name not in self.templates:
             messagebox.showerror("Error", "Invalid template choice.")
-            return "break"
+            return 0
 
         template = self.templates[template_name]
         duration = normalize_lookback(lookback, self.platform)
 
         if duration is None:
             messagebox.showerror("Error", "Invalid time range")
-            return "break"
+            return 0
 
         inputs = {}
         for field, (var, validation_type) in self.fields.items():
@@ -396,7 +395,7 @@ class QueryGui:
                 valid, msg = validate(value, validation_type)
                 if not valid:
                     messagebox.showerror("Invalid input", f"{field}: {msg}")
-                    return "break"
+                    return 0
                 inputs[field] = value
 
         include_post = self.include_post_pipeline_var.get() if platform == "defender" else False
