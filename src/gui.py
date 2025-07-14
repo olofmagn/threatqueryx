@@ -15,7 +15,11 @@ from utils.configuration import load_templates, validate, normalize_lookback
 from utils.generate_queries import build_query
 
 class QueryGui:
+    self.INTERNAL_TIME_RANGES = ["5m", "10m", "30m", "1h", "3h", "12h", "1d"]
+    self.DISPLAY_TIME_RANGES = ["5 MINUTES", "10 MINUTES", "30 MINUTES", "1 HOUR", "3 HOURS", "12 HOURS", "1 DAY"]
+
     def __init__(self, root: tk.Tk) -> None:
+
         """
         Initialize the main application window and its widgets.
 
@@ -23,19 +27,13 @@ class QueryGui:
         - root (tk.Tk): The root Tkinter window passed by the caller.
         """
 
-        # Constants
+        # UI constants - configuration values
         MIN_WIDTH = 500
         MIN_HEIGHT = 400
         OUTPUT_HEIGHT = 10
 
-        # Template loading
+        # Template cache loading
         self.template_cache = {}
-
-        """
-        Internal/external time ranges
-        """
-        self.INTERNAL_TIME_RANGES = ["5m", "10m", "30m", "1h", "3h", "12h", "1d"]
-        self.DISPLAY_TIME_RANGES = ["5 MINUTES", "10 MINUTES", "30 MINUTES", "1 HOUR", "3 HOURS", "12 HOURS", "1 DAY"]
 
         """
         Initialization of UI
