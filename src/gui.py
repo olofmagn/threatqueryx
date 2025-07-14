@@ -15,8 +15,11 @@ from utils.configuration import load_templates, validate, normalize_lookback
 from utils.generate_queries import build_query
 
 class QueryGui:
-    self.INTERNAL_TIME_RANGES = ["5m", "10m", "30m", "1h", "3h", "12h", "1d"]
-    self.DISPLAY_TIME_RANGES = ["5 MINUTES", "10 MINUTES", "30 MINUTES", "1 HOUR", "3 HOURS", "12 HOURS", "1 DAY"]
+    INTERNAL_TIME_RANGES = ["5m", "10m", "30m", "1h", "3h", "12h", "1d"]
+    DISPLAY_TIME_RANGES = ["5 MINUTES", "10 MINUTES", "30 MINUTES", "1 HOUR", "3 HOURS", "12 HOURS", "1 DAY"]
+    MIN_WIDTH = 500
+    MIN_HEIGHT = 400
+    OUTPUT_HEIGHT = 10
 
     def __init__(self, root: tk.Tk) -> None:
 
@@ -27,11 +30,6 @@ class QueryGui:
         - root (tk.Tk): The root Tkinter window passed by the caller.
         """
 
-        # UI constants - configuration values
-        MIN_WIDTH = 500
-        MIN_HEIGHT = 400
-        OUTPUT_HEIGHT = 10
-
         # Template cache loading
         self.template_cache = {}
 
@@ -40,7 +38,7 @@ class QueryGui:
         """
         self.root = root
         self.root.title("ThreatQueryX - Multi-Platform Threat Hunting Query Builder")
-        self.root.minsize(MIN_WIDTH,MIN_HEIGHT) # Optional minimum size
+        self.root.minsize(self.MIN_WIDTH,self.MIN_HEIGHT) # Optional minimum size
         self.root.resizable(False, False)
 
         self.platforms = ["qradar", "defender", "elastic"]
@@ -127,7 +125,7 @@ class QueryGui:
         btn.grid(row=6, column=0, columnspan=2, pady=10, sticky="nsew", padx=5)
 
         # === Output Text Box ===
-        self.output_text = ScrolledText(self.frame, height=OUTPUT_HEIGHT, wrap=tk.WORD)
+        self.output_text = ScrolledText(self.frame, height=self.OUTPUT_HEIGHT, wrap=tk.WORD)
         self.output_text.grid(row=7, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
 
         # === Copy Button ===
