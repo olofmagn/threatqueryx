@@ -361,8 +361,7 @@ class QueryGui:
         Args:
             event (Optional[tk.Event]): The Tkinter event that triggered the action.
         """
-
-        if self.listbox:
+        if hasattr(self, 'listbox') and self.listbox:
             self.listbox.destroy()
             self.listbox = None
         return "break"
