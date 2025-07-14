@@ -61,26 +61,6 @@ def validate(value: str, val_type: Optional[str]) -> Tuple[bool, str]:
         return value.isdigit(), "Must be an integer"
     return True, ""
 
-def parse_args() -> Tuple[str, Optional[str]]:
-    """
-    Parse command line arguments for mode and platform.
-
-    Returns:
-        Tuple[str, Optional[str]]: A tuple of (mode, platform).
-    """
-
-    mode = "gui"
-    platform = None
-
-    for arg in sys.argv[1:]:
-        arg_l = arg.lower()
-        if arg_l == "cli":
-            mode = "cli"
-        elif arg_l in VALID_PLATFORMS:
-            platform = arg_l
-
-    return mode, platform
-
 def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: Optional[str]) -> Tuple[str, Optional[Dict[str, Any]]]:
     """
     Resolves platform and templates given the mode and platform.
@@ -160,9 +140,8 @@ def normalize_lookback(lookback: str, platform: str) -> Optional[str]:
     value, unit = match.groups()
     value = int(value)
 
-    # Ensure positive values
     if value <= 0:
-        value = 1
+        return None
 
     is_defender_or_elastic = platform in ("defender", "elastic")
 

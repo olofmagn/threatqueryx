@@ -8,7 +8,6 @@ VERSION = "1.0.0"
 import tkinter as tk
 import sys
 
-from utils.configuration import parse_args
 from utils.configuration import resolve_platform_and_templates
 from utils.configuration import choose_mode
 

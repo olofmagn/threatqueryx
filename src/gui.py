@@ -177,7 +177,6 @@ class QueryGui:
                     self._render_fields()  
                 except IndexError:
                     pass
-
             if self.listbox:
                 self._hide_listbox()
 
@@ -239,7 +238,6 @@ class QueryGui:
             current_index = curr[0] if curr else -1
 
             direction = {"Up": -1, "Down": +1}.get(event.keysym)
-
             if direction is None:
                 return "break"
 
@@ -396,11 +394,9 @@ class QueryGui:
 
             if value:
                 valid, msg = validate(value, validation_type)
-
                 if not valid:
                     messagebox.showerror("Invalid input", f"{field}: {msg}")
                     return "break"
-
                 inputs[field] = value
 
         include_post = self.include_post_pipeline_var.get() if platform == "defender" else False
@@ -450,7 +446,6 @@ class QueryGui:
             internal = self.display_to_internal[current]
         else:
             internal = current.lower()
-
             if internal in self.internal_to_display:
                 pass
             else:
@@ -525,4 +520,5 @@ class QueryGui:
 
         small = small.lower()
         parts = re.split(r'[_\s]', large.lower())
+
         return any(part.startswith(small) for part in parts)
