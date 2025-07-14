@@ -1,4 +1,3 @@
-
 """
 GUI Interface
 """
@@ -29,6 +28,10 @@ class QueryGui:
         Args:
         - root (tk.Tk): The root Tkinter window passed by the caller.
         """
+
+        # ==========================================
+        # UI CREATION METHODS
+        # ==========================================
 
         # Template cache loading
         self.template_cache = {}
@@ -150,232 +153,7 @@ class QueryGui:
         
         # === Load templates initially ===
         self.load_templates_for_platform(self.platform)
-
-    def _get_platform_info_text(self) -> str:
-        """
-        Get the current platform in use.
-
-        Returns:
-        - str: The display platform in use.
-        """
-
-        platform = self.platform_var.get()
-
-        match platform:
-            case "qradar":
-                return "Using QRadar AQL query mode."
-
-            case "elastic":
-                return "Using Elastic Search query mode."
-
-            case "defender":
-                return "Using Microsoft Defender query mode."
-
-            case _:
-                return None
-
-    def _update_field_visibility(self) -> None:
-        """
-        Update field visiblity info label for all platforms
-        """
-
-        self.platform_info_label.config(text=self._get_platform_info_text())
-
-
-        if self.platform.lower() == "defender":
-            self.checkbox.grid(row=5, column=0, columnspan=2,padx=5, pady=5, sticky="nsew")
-
-        else:
-            self.checkbox.grid_forget()  # hide checkbox
-
-    def _on_platform_change(self, event: tk.Event = None) -> None:
-        """
-        Used to detect platform change so templates gets correctly loaded
-        """
-
-        plat = self.platform_var.get()
-        if plat: 
-            self.platform = plat
-            self.load_templates_for_platform(plat)
-        
-        # Clear the template input field and hide suggestions
-        self.template_var.set("")
-        if self.listbox:
-            self._hide_listbox()
-
-        self._update_field_visibility()
-
-    def load_templates_for_platform(self, platform: str) -> None: 
-        """
-        Loads templates for a given platform
-
-        Args:
-        - platform: the platform, e.g., 'qradar', 'defender' or 'elastic'.
-        """
-
-        if platform in self.template_cache:
-            self.templates = self.template_cache[platform]
-            return 
-
-        try:
-            self.templates = load_templates(platform)
-            self.template_cache[platform] = self.templates
-        except Exception as e:
-            messagebox.showerror("Error loading templates", str(e))
-            self.templates = {}
-
-        self.template_var.set("")
-        self.autocomplete_entry["values"] = list(self.templates.keys())
-        self._clear_fields()
-
-    def _clear_fields(self) -> None:
-        """
-        Destroy all parameter widgets and clear state.
-        """
-
-        for widget in self.inputs_frame.winfo_children():
-            widget.destroy()
-
-        self.param_rows.clear()  # clear stored refs
-        self.fields.clear()
-        self.output_text.delete("1.0", tk.END)
-
-    def _render_fields(self, event: Optional[tk.Event] = None) -> None:
-        """
-        Renders fields event handler.
-
-        Args:
-        - event (Optional[tk.Event]): The Tkinter event that triggered the handler.
-        """
-
-        self._clear_fields()
-
-        name = self.template_var.get()
-        template = self.templates[name]
-        optional_fields = template.get("optional_fields", {})
-
-        if optional_fields:
-            self.inputs_frame.grid(row=3, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
-
-        else:
-            self.inputs_frame.grid_remove()
-
-        for i, (field, meta) in enumerate(optional_fields.items()):
-            label_text = field
-            help_text = ""
-
-            if isinstance(meta, dict):
-                help_text = meta.get("help", "")
-
-            if help_text:
-                label_text += f" ({help_text})"
-            
-            # Optional fields layout
-            label = ttk.Label(self.inputs_frame, text=label_text + ":")
-            entry_var = tk.StringVar()
-            entry = ttk.Entry(self.inputs_frame, textvariable=entry_var)
-
-            label.grid(row=i, column=0, sticky="nsew", padx=5, pady=5)
-            entry.grid(row=i, column=1, sticky="nsew", padx=5, pady=5)
-
-            self.param_rows.append((label, entry, entry_var))
-
-            self.fields[field] = (
-                entry_var,
-                meta.get("validation") if isinstance(meta, dict) else None
-            )
     
-    # === Search/template oriented logic here ===
-    def generate(self) -> None:
-        """
-        Builds an query for a given platform.
-        """
-
-        # Normalize
-        template_name = self.template_var.get().lower().strip()
-        platform = self.platform_var.get().lower()
-
-        lookback = self.lookback_var.get()
-
-        if not template_name or template_name not in self.templates:
-            messagebox.showerror("Error", "Invalid template choice.")
-            return "break"
-
-        template = self.templates[template_name]
-        duration = normalize_lookback(lookback, self.platform)
-
-        if duration is None:
-            messagebox.showerror("Error", "Invalid time range")
-            return "break"
-
-        inputs = {}
-        for field, (var, validation_type) in self.fields.items():
-            value = var.get().strip()
-
-            if value:
-                valid, msg = validate(value, validation_type)
-
-                if not valid:
-                    messagebox.showerror("Invalid input", f"{field}: {msg}")
-                    return "break"
-
-                inputs[field] = value
-
-        include_post = self.include_post_pipeline_var.get() if platform == "defender" else False
-
-        try:
-            query = build_query(template, inputs, duration, platform, include_post)
-            self.output_text.delete("1.0", tk.END)
-            self.output_text.insert(tk.END, query)
-        except Exception as e:
-            messagebox.showerror("Build Error", str(e))
-
-    def _copy(self) -> None:
-        """
-        Copy query to clipboard
-        """
-
-        query = self.output_text.get("1.0", tk.END).strip()
-        self.root.clipboard_clear()
-        self.root.clipboard_append(query)
-        messagebox.showinfo("Copied", "Query copied to clipboard!")
-
-    def _change_time_range(self, direction: int) -> None:
-        current = self.lookback_var.get().strip().upper()
-
-        if current in self.display_to_internal:
-            internal = self.display_to_internal[current]
-
-        else:
-            internal = current.lower()
-
-            if internal in self.internal_to_display:
-                pass
-
-            else:
-                internal = self.INTERNAL_TIME_RANGES[0]
-
-        # Find index in internal list for cycling
-        idx = self.INTERNAL_TIME_RANGES.index(internal)
-        new_idx = (idx + direction) % len(self.INTERNAL_TIME_RANGES)
-
-        # Update display label in entry
-        new_display = self.internal_to_display[self.INTERNAL_TIME_RANGES[new_idx]]
-        self.lookback_var.set(new_display)
-
-    def _hide_listbox(self, event: Optional[tk.Event] = None) -> str:
-        """
-        Hides the suggestion listbox if it exists.
-
-        Args:
-            event (Optional[tk.Event]): The Tkinter event that triggered the action.
-        """
-        if hasattr(self, 'listbox') and self.listbox:
-            self.listbox.destroy()
-            self.listbox = None
-        return "break"
-        
-    # === Event handlers ====
     def _setup_template_autocomplete(self) -> None:
         """
         Setup autocomplete
@@ -491,6 +269,236 @@ class QueryGui:
         self.autocomplete_entry.bind("<Down>", _on_listbox_nav)
         self.autocomplete_entry.bind("<Up>", _on_listbox_nav)
 
+    def _update_field_visibility(self) -> None:
+        """
+        Update field visiblity info label for all platforms
+        """
+
+        self.platform_info_label.config(text=self._get_platform_info_text())
+
+        if self.platform.lower() == "defender":
+            self.checkbox.grid(row=5, column=0, columnspan=2,padx=5, pady=5, sticky="nsew")
+        else:
+            self.checkbox.grid_forget()  # hide checkbox
+
+    # ==========================================
+    # TEMPLATE & DATA MANAGEMENT
+    # ==========================================
+
+    def load_templates_for_platform(self, platform: str) -> None: 
+        """
+        Loads templates for a given platform
+
+        Args:
+        - platform: the platform, e.g., 'qradar', 'defender' or 'elastic'.
+        """
+
+        if platform in self.template_cache:
+            self.templates = self.template_cache[platform]
+            return 
+
+        try:
+            self.templates = load_templates(platform)
+            self.template_cache[platform] = self.templates
+        except Exception as e:
+            messagebox.showerror("Error loading templates", str(e))
+            self.templates = {}
+
+        self.template_var.set("")
+        self.autocomplete_entry["values"] = list(self.templates.keys())
+        self._clear_fields()
+    
+    def _clear_fields(self) -> None:
+        """
+        Destroy all parameter widgets and clear state.
+        """
+
+        for widget in self.inputs_frame.winfo_children():
+            widget.destroy()
+
+        self.param_rows.clear()  # clear stored refs
+        self.fields.clear()
+        self.output_text.delete("1.0", tk.END)
+
+    def _render_fields(self, event: Optional[tk.Event] = None) -> None:
+        """
+        Renders fields event handler.
+
+        Args:
+        - event (Optional[tk.Event]): The Tkinter event that triggered the handler.
+        """
+
+        self._clear_fields()
+
+        name = self.template_var.get()
+        template = self.templates[name]
+        optional_fields = template.get("optional_fields", {})
+
+        if optional_fields:
+            self.inputs_frame.grid(row=3, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
+        else:
+            self.inputs_frame.grid_remove()
+
+        for i, (field, meta) in enumerate(optional_fields.items()):
+            label_text = field
+            help_text = ""
+
+            if isinstance(meta, dict):
+                help_text = meta.get("help", "")
+
+            if help_text:
+                label_text += f" ({help_text})"
+            
+            # Optional fields layout
+            label = ttk.Label(self.inputs_frame, text=label_text + ":")
+            entry_var = tk.StringVar()
+            entry = ttk.Entry(self.inputs_frame, textvariable=entry_var)
+
+            label.grid(row=i, column=0, sticky="nsew", padx=5, pady=5)
+            entry.grid(row=i, column=1, sticky="nsew", padx=5, pady=5)
+
+            self.param_rows.append((label, entry, entry_var))
+
+            self.fields[field] = (
+                entry_var,
+                meta.get("validation") if isinstance(meta, dict) else None
+            )
+
+    # ==========================================
+    # CORE BUSINESS LOGIC
+    # ==========================================
+
+    def generate(self) -> None:
+        """
+        Builds an query for a given platform.
+        """
+
+        # Normalize
+        template_name = self.template_var.get().lower().strip()
+        platform = self.platform_var.get().lower()
+
+        lookback = self.lookback_var.get()
+
+        if not template_name or template_name not in self.templates:
+            messagebox.showerror("Error", "Invalid template choice.")
+            return "break"
+
+        template = self.templates[template_name]
+        duration = normalize_lookback(lookback, self.platform)
+
+        if duration is None:
+            messagebox.showerror("Error", "Invalid time range")
+            return "break"
+
+        inputs = {}
+        for field, (var, validation_type) in self.fields.items():
+            value = var.get().strip()
+
+            if value:
+                valid, msg = validate(value, validation_type)
+
+                if not valid:
+                    messagebox.showerror("Invalid input", f"{field}: {msg}")
+                    return "break"
+
+                inputs[field] = value
+
+        include_post = self.include_post_pipeline_var.get() if platform == "defender" else False
+
+        try:
+            query = build_query(template, inputs, duration, platform, include_post)
+            self.output_text.delete("1.0", tk.END)
+            self.output_text.insert(tk.END, query)
+        except Exception as e:
+            messagebox.showerror("Build Error", str(e))
+
+    def _copy(self) -> None:
+        """
+        Copy query to clipboard
+        """
+
+        query = self.output_text.get("1.0", tk.END).strip()
+        self.root.clipboard_clear()
+        self.root.clipboard_append(query)
+        messagebox.showinfo("Copied", "Query copied to clipboard!")
+
+    # ==========================================
+    # EVENT HANDLERS
+    # ==========================================
+
+    def _on_platform_change(self, event: tk.Event = None) -> None:
+        """
+        Used to detect platform change so templates gets correctly loaded
+        """
+
+        plat = self.platform_var.get()
+        if plat: 
+            self.platform = plat
+            self.load_templates_for_platform(plat)
+        
+        # Clear the template input field and hide suggestions
+        self.template_var.set("")
+        if self.listbox:
+            self._hide_listbox()
+
+        self._update_field_visibility()
+    
+    def _change_time_range(self, direction: int) -> None:
+        current = self.lookback_var.get().strip().upper()
+
+        if current in self.display_to_internal:
+            internal = self.display_to_internal[current]
+        else:
+            internal = current.lower()
+
+            if internal in self.internal_to_display:
+                pass
+            else:
+                internal = self.INTERNAL_TIME_RANGES[0]
+
+        # Find index in internal list for cycling
+        idx = self.INTERNAL_TIME_RANGES.index(internal)
+        new_idx = (idx + direction) % len(self.INTERNAL_TIME_RANGES)
+
+        # Update display label in entry
+        new_display = self.internal_to_display[self.INTERNAL_TIME_RANGES[new_idx]]
+        self.lookback_var.set(new_display)
+
+    def _hide_listbox(self, event: Optional[tk.Event] = None) -> str:
+        """
+        Hides the suggestion listbox if it exists.
+
+        Args:
+            event (Optional[tk.Event]): The Tkinter event that triggered the action.
+        """
+        if hasattr(self, 'listbox') and self.listbox:
+            self.listbox.destroy()
+            self.listbox = None
+        return "break"
+        
+    # ==========================================
+    # UTILITY METHODS
+    # ==========================================
+
+    def _get_platform_info_text(self) -> str:
+        """
+        Get the current platform in use.
+
+        Returns:
+        - str: The display platform in use.
+        """
+
+        platform = self.platform_var.get()
+
+        match platform:
+            case "qradar":
+                return "Using QRadar AQL query mode."
+            case "elastic":
+                return "Using Elastic Search query mode."
+            case "defender":
+                return "Using Microsoft Defender query mode."
+            case _:
+                return None
 
     def _fuzzy_match(self, input_text: str, options: List[str]) -> List[str]:
         """
@@ -505,7 +513,6 @@ class QueryGui:
 
         return [opt for opt in options if self._is_subsequence(input_text, opt)]
 
-
     def _is_subsequence(self, small: str, large: str) -> bool:
         """
         Args:
@@ -519,4 +526,3 @@ class QueryGui:
         small = small.lower()
         parts = re.split(r'[_\s]', large.lower())
         return any(part.startswith(small) for part in parts)
-
