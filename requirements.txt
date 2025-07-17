@@ -1,2 +1,4 @@
 colorama
-questionary
+questionary~=2.1.0
+
+PyYAML~=6.0.2

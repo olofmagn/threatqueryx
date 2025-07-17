@@ -1,4 +1,4 @@
-failed_logins:
+failed_logins: # clear stored refs
   description: "Search for authentication failures with optional filters."
   base: "event.category: 'authentication'"
   required_fields:
@@ -73,9 +73,9 @@ rdp_loopback_traffic:
   description: "Detect RDP (port 3389) traffic involving loopback addresses (127.0.0.0/8) using event code 5156."
   base: "event.category: 'network'"
   required_fields:
-  - "event.id: '5156'"
-  - "(source.port: '3389' or destination.port: '3389')"
-  - "(source.ip: '127.0.0.0/8' or destination.ip: '127.0.0.0/8')"
+    - "event.id: '5156'"
+    - "(source.port: '3389' or destination.port: '3389')"
+    - "(source.ip: '127.0.0.0/8' or destination.ip: '127.0.0.0/8')"
   source.ip:
     pattern: "source.ip: '{value}'"
     help: "Filter for a specific source IP address"

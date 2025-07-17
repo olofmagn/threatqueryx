@@ -2,34 +2,35 @@
 Configuration functions
 """
 
-import os
-import sys
-import yaml
 import ipaddress
+import os
 import re
-import questionary
+import sys
 from typing import Dict, Any, Literal, Tuple, Optional
 
-VALID_PLATFORMS = {
-    "defender": {"description": "Microsoft Defender for Endpoint"},
-    "elastic": {"description": "Elastic SIEM"},
-    "qradar": {"description": "IBM QRadar"}
-}
+import questionary
+import yaml
+
+from utils.ui_constants import (
+    DEFAULT_ENCODING,
+    VALID_PLATFORMS
+)
+
 
 def load_templates(platform: str) -> Dict[str, Any]:
     """
-    Loads templates for the specified SIEM platform.
+    Loads templates for the specified SIEM platform
 
     Args:
-        platform (str): The SIEM platform name (e.g., 'qradar', 'elastic', 'defender').
+        platform (str): The SIEM platform name (e.g., 'qradar', 'elastic', 'defender')
 
     Returns:
-        Dict[str, Any]: Parsed YAML template as a dictionary.
+        Dict[str, Any]: Parsed YAML template as a dictionary
     """
 
     file_path = os.path.join("templates", f"{platform.lower()}.yaml")
     try:
-        with open(file_path, "r", encoding='utf-8') as f:
+        with open(file_path, "r", encoding=DEFAULT_ENCODING) as f:
             templates = yaml.safe_load(f)
             return templates
     except FileNotFoundError:
@@ -39,16 +40,17 @@ def load_templates(platform: str) -> Dict[str, Any]:
         print(f"I/O Error occurred when reading {file_path}: {e}")
         sys.exit(1)
 
+
 def validate(value: str, val_type: Optional[str]) -> Tuple[bool, str]:
     """
     Validates a given value against a specific type
 
     Args:
-        value (str): The value to validate (e.g., IP address or port).
+        value (str): The value to validate (e.g., IP address or port)
         val_type (Optional[str]): The type to validate against (e.g., 'ip', 'port', 'domain')
 
     Returns:
-        Tuple[bool, str]: Whether the value is valid with a result or error message.
+        Tuple[bool, str]: Whether the value is valid with a result or error message
     """
 
     if val_type == "ip":
@@ -61,26 +63,28 @@ def validate(value: str, val_type: Optional[str]) -> Tuple[bool, str]:
         return value.isdigit(), "Must be an integer"
     return True, ""
 
-def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: Optional[str]) -> Tuple[str, Optional[Dict[str, Any]]]:
+
+def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: Optional[str]) -> Tuple[
+    str, Optional[Dict[str, Any]]]:
     """
-    Resolves platform and templates given the mode and platform.
+    Resolves platform and templates given the mode and platform
 
     Args:
         mode (Literal["cli", "gui"]): The interface mode (cli or gui)
         platform (Optional[str]): The platform to use, e.g., 'qradar', 'elastic' or 'defender'
 
     Returns:
-        Tuple[str, Optional[Dict[str, Any]]]: The platform name and templates (if CLI mode).
+        Tuple[str, Optional[Dict[str, Any]]]: The platform name and templates (if CLI mode)
     """
 
     if mode == "cli":
         choices = [
-            questionary.Choice(
-                title=f"{name} - {meta.get('description', 'no description')}",
-                value=name
-            )
-            for name, meta in VALID_PLATFORMS.items()
-        ] + [questionary.Choice("Quit", value="quit")]
+                      questionary.Choice(
+                          title=f"{name} - {meta.get('description', 'no description')}",
+                          value=name
+                      )
+                      for name, meta in VALID_PLATFORMS.items()
+                  ] + [questionary.Choice("Quit", value="quit")]
 
         platform = questionary.select(
             "Choose a platform to use:",
@@ -100,12 +104,13 @@ def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: Option
         platform = platform or "qradar"
         return platform, None
 
+
 def choose_mode() -> Optional[str]:
     """
-    Choose between GUI and CLI mode.
+    Choose between GUI and CLI mode
 
     Returns:
-        Optional[str]: The chosen mode, or None if quit is selected.
+        Optional[str]: The chosen mode, or None if quit is selected
     """
 
     mode = questionary.select(
@@ -119,24 +124,25 @@ def choose_mode() -> Optional[str]:
 
     return mode  # Let main.py handle quit logic
 
+
 def normalize_lookback(lookback: str, platform: str) -> Optional[str]:
     """
-    Normalizes lookback values for different platforms.
-    
+    Normalizes lookback values for different platforms
+
     Args:
-        lookback (str): The string value to transform to correct format.
-        platform (str): The platform name for format determination.
+        lookback (str): The string value to transform to correct format
+        platform (str): The platform name for format determination
 
     Returns:
-        Optional[str]: A lookback value in the correct format, or None if invalid.
+        Optional[str]: A lookback value in the correct format, or None if invalid
     """
-    
+
     lookback = lookback.strip().lower()
     match = re.match(r"(\d+)\s*(minutes?|hours?|days?|min|m|h|d)", lookback, re.IGNORECASE)
 
     if not match:
         return None
-    
+
     value, unit = match.groups()
     value = int(value)
 
@@ -151,6 +157,6 @@ def normalize_lookback(lookback: str, platform: str) -> Optional[str]:
         case "hour" | "hours" | "h":
             return f"{value}h" if is_defender_or_elastic else f"{value} HOURS"
         case "day" | "days" | "d":
-            return f"{value*24}h" if is_defender_or_elastic else f"{value} DAYS"
+            return f"{value * 24}h" if is_defender_or_elastic else f"{value} DAYS"
         case _:
             return None

@@ -2,157 +2,323 @@
 GUI Interface
 """
 
-import re 
+import re
 import tkinter as tk
-
+from tkinter import ttk, messagebox
+from tkinter.scrolledtext import ScrolledText
 from typing import List, Optional
 
-from tkinter import ttk, messagebox, StringVar
-from tkinter.scrolledtext import ScrolledText
-
-from utils.configuration import load_templates, validate, normalize_lookback
 from utils.generate_queries import build_query
 
-class QueryGui:
-    INTERNAL_TIME_RANGES = ["5m", "10m", "30m", "1h", "3h", "12h", "1d"]
-    DISPLAY_TIME_RANGES = ["5 MINUTES", "10 MINUTES", "30 MINUTES", "1 HOUR", "3 HOURS", "12 HOURS", "1 DAY"]
-    MIN_WIDTH = 500
-    MIN_HEIGHT = 400
-    OUTPUT_HEIGHT = 10
+from utils.configuration import (
+    load_templates,
+    normalize_lookback,
+    validate
+)
 
+from utils.ui_constants import (
+    DEFAULT_MODE,
+    PLATFORMS,
+    TIME_RANGES,
+    DEFAULT_TIME_RANGE_INDEX,
+    DEFAULT_WINDOW_WIDTH,
+    WINDOW_PADDING,
+    DEFAULT_WINDOW_HEIGHT,
+    DEFAULT_OUTPUT_HEIGHT,
+    WINDOW_TITLE,
+    GRID_STICKY_EAST,
+    GRID_STICKY_NSEW,
+    GRID_STICKY_E,
+    COPYRIGHT_TEXT,
+    COPYRIGHT_FONT,
+    COPYRIGHT_COLOR,
+    WIDGET_PADDING_X,
+    WIDGET_PADDING_Y,
+    TIME_ENTRY_WIDTH,
+    ARROW_BUTTON_WIDTH,
+    ARROW_BUTTON_PADDING
+)
+
+
+# =============================================================================
+# UI STATE MANAGEMENT METHODS
+# =============================================================================
+
+def is_subsequence(small: str, large: str) -> bool:
+    """
+    Args:
+    - small (str): The input string to match
+    - large (str): The string to search within
+
+    Returns:
+    - bool: True if 'small' is prefix of any part of 'large'
+    """
+
+    small = small.lower()
+    parts = re.split(r'[_\s]', large.lower())
+
+    return any(part.startswith(small) for part in parts)
+
+
+def fuzzy_match(input_text: str, options: List[str]) -> List[str]:
+    """
+    Args:
+    - input_text (str): An input string
+    - options (List[str]) : A list of possible options
+
+    Returns:
+    - A list of options that contain all characters in order from input_text
+    """
+
+    return [opt for opt in options if is_subsequence(input_text, opt)]
+
+
+# =============================================================================
+# TIME RANGE UTILITIES
+# =============================================================================
+
+def get_display_values() -> List[str]:
+    """
+    Get display values
+
+    Returns:
+    - List[str]: List of display values for time ranges
+    """
+
+    return [display for _, display in TIME_RANGES]
+
+
+def get_default_time_display() -> str:
+    """
+    Get default time range display value
+
+    Returns:
+    - str: Default time range display value
+    """
+
+    return get_display_values()[DEFAULT_TIME_RANGE_INDEX]
+
+
+def cycle_time_range_value(current_value: str, direction: int, display_values: List[str]) -> str:
+    """
+    Cycle time range value
+
+    Args:
+    - current_value (str): Current time range value
+    - direction (int): Direction to cycle (-1 or 1)
+    - display_values (List[str]): Available display values
+
+    Returns:
+    - str: New time range value
+    """
+
+    try:
+        current_idx = display_values.index(current_value)
+    except ValueError:
+        current_idx = DEFAULT_TIME_RANGE_INDEX
+
+    new_idx = (current_idx + direction) % len(display_values)
+
+    return display_values[new_idx]
+
+
+# =============================================================================
+# MAIN GUI CLASS
+# =============================================================================
+
+
+class QueryGui:
     def __init__(self, root: tk.Tk) -> None:
         """
-        Initialize the main application window and its widgets.
+        Initialize the main application window and its widgets
 
         Args:
-        - root (tk.Tk): The root Tkinter window passed by the caller.
+        - root (tk.Tk): The root Tkinter window passed by the caller
         """
 
-        # ==========================================
-        # UI CREATION METHODS
-        # ==========================================
+        # Initialize core attributes
+        self.platforms = PLATFORMS
+        self.platform = DEFAULT_MODE
+        self.templates = {}
+        self.fields = {}
+
+        # Window size constants
+        self.MAX_WIDTH = DEFAULT_WINDOW_WIDTH
+        self.MAX_HEIGHT = DEFAULT_WINDOW_HEIGHT
+        self.OUTPUT_HEIGHT = DEFAULT_OUTPUT_HEIGHT
+
+        # Time ranges
+        self.time_ranges = TIME_RANGES
+        self.display_values = get_display_values()
 
         # Template cache loading
         self.template_cache = {}
 
-        """
-        Initialization of UI
-        """
+        # Setup window
         self.root = root
-        self.root.title("ThreatQueryX - Multi-Platform Threat Hunting Query Builder")
-        self.root.minsize(self.MIN_WIDTH, self.MIN_HEIGHT) # Optional minimum size
+        self.root.title(WINDOW_TITLE)
+        self.root.minsize(self.MAX_HEIGHT, self.MAX_WIDTH)  # Optional minimum size
         self.root.resizable(False, False)
 
-        self.platforms = ["qradar", "defender", "elastic"]
-        self.platform = "qradar"
-
-        self.templates = {}
-        self.fields = {}
-
-        self.frame = ttk.Frame(self.root, padding=10)
+        self.frame = ttk.Frame(self.root, padding=WINDOW_PADDING)
         self.frame.pack(fill=tk.BOTH, expand=True)
 
+        # Initialize GUI
         self._create_widgets()
         self._update_field_visibility()
 
-        # Mapping internal <-> display
-        self.internal_to_display = dict(zip(self.INTERNAL_TIME_RANGES, self.DISPLAY_TIME_RANGES))
-        self.display_to_internal = dict(zip(self.DISPLAY_TIME_RANGES, self.INTERNAL_TIME_RANGES))
+    # =========================================================================
+    # PROPERTY METHODS (CACHED ACCESS)
+    # =========================================================================
+
+    @property
+    def current_template(self) -> str:
+        """
+        Current mode
+
+        Returns:
+        - str: Current mode in lowercase
+        """
+
+        return self.template_var.get().lower()
+
+    @property
+    def current_platform(self) -> str:
+        """
+        Current type
+
+        Returns:
+        - str: Current type selection
+        """
+
+        return self.platform_var.get()
+
+    @property
+    def current_lookback(self) -> str:
+        """
+        Current hash type
+
+        Returns:
+        - str: Current hash type selection
+        """
+
+        return self.lookback_var.get()
+
+    # =========================================================================
+    # WIDGET CREATION METHODS
+    # =========================================================================
 
     def _create_widgets(self) -> None:
         """
-        Create and layout all necessary widgets with consistent styling.
+        Create and layout all necessary widgets with consistent styling
         """
 
         # === Platform Selector ===
-        ttk.Label(self.frame, text="Platform:").grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        ttk.Label(self.frame, text="Platform:").grid(row=0, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+                                                     pady=WIDGET_PADDING_Y)
         self.platform_var = tk.StringVar(value=self.platform)
 
         self.platform_menu = ttk.Combobox(
             self.frame,
             textvariable=self.platform_var,
             values=[p for p in self.platforms],
-            state = "readonly"
+            state="readonly"
         )
 
-        self.platform_menu.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
+        self.platform_menu.grid(row=0, column=1, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
         self.platform_menu.bind("<<ComboboxSelected>>", self._on_platform_change)
 
         # === Template Selector ===
-        ttk.Label(self.frame, text="Template:").grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
+        ttk.Label(self.frame, text="Template:").grid(row=1, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+                                                     pady=WIDGET_PADDING_Y)
         self.template_var = tk.StringVar()
         self.autocomplete_entry = ttk.Combobox(self.frame, textvariable=self.template_var)
-        self.autocomplete_entry.grid(row=1, column=1, sticky="nsew", padx=5, pady=5)
+        self.autocomplete_entry.grid(row=1, column=1, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+                                     pady=WIDGET_PADDING_Y)
         self.autocomplete_entry.bind("<<ComboboxSelected>>", self._render_fields)
         self._setup_template_autocomplete()
 
         # === Parameters Frame ===
         self.inputs_frame = ttk.LabelFrame(self.frame, text="Parameters")
 
-        # Configure two columns: labels and entry widgets
-        self.inputs_frame.columnconfigure(0, weight=1)
-        self.inputs_frame.columnconfigure(1, weight=2)
-        
         # Init empty lists for field tracking
         self.param_rows = []
         self.fields = {}
 
         # === Time Range ===
-        ttk.Label(self.frame, text="Time Range:").grid(row=4, column=0, sticky="nsew", padx=5, pady=5)
+        ttk.Label(self.frame, text="Time Range:").grid(row=4, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+                                                       pady=WIDGET_PADDING_Y)
 
         time_frame = ttk.Frame(self.frame)
-        time_frame.grid(row=4, column=1, sticky="nsew", padx=5, pady=5)
+        time_frame.grid(row=4, column=1, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
 
-        self.lookback_var = tk.StringVar(value=self.DISPLAY_TIME_RANGES[1])
-        self.time_entry = ttk.Entry(time_frame, textvariable=self.lookback_var, width=15)
+        self.lookback_var = tk.StringVar(value=self.display_values[DEFAULT_TIME_RANGE_INDEX])
+        self.time_entry = ttk.Entry(time_frame, textvariable=self.lookback_var, width=TIME_ENTRY_WIDTH)
         self.time_entry.pack(side="left")
 
-        self.btn_time_prev = ttk.Button(time_frame, text="❮", width=2, command=lambda: self._change_time_range(-1))
-        self.btn_time_prev.pack(side="left", padx=5)
+        self.btn_time_prev = ttk.Button(time_frame, text="❮", style="Arrow.TButton", padding=ARROW_BUTTON_PADDING,
+                                        width=ARROW_BUTTON_WIDTH, command=lambda: self._change_time_range(-1))
+        self.btn_time_prev.pack(side="left", padx=WIDGET_PADDING_X)
 
-        self.btn_time_next = ttk.Button(time_frame, text="❯", width=2, command=lambda: self._change_time_range(1))
-        self.btn_time_next.pack(side="left", padx=5)
+        self.btn_time_next = ttk.Button(time_frame, text="❯", style="Arrow.TButton", padding=ARROW_BUTTON_PADDING,
+                                        width=ARROW_BUTTON_WIDTH, command=lambda: self._change_time_range(1))
+        self.btn_time_next.pack(side="left", padx=WIDGET_PADDING_X)
 
         # Defender button for post_pipeline
         self.include_post_pipeline_var = tk.BooleanVar(value=False)
 
         self.checkbox = tk.Checkbutton(
-                self.frame, 
-                text="Include summarisation",
-                variable=self.include_post_pipeline_var
-                )
+            self.frame,
+            text="Include summarization",
+            variable=self.include_post_pipeline_var
+        )
 
         # === Generate Button ===
-        btn = ttk.Button(self.frame, text="Generate Query", command=self.generate)
-        btn.grid(row=6, column=0, columnspan=2, pady=10, sticky="nsew", padx=5)
+        btn = ttk.Button(self.frame, text="Generate Query", command=self._generate)
+        btn.grid(row=6, column=0, columnspan=2, pady=10, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X)
 
         # === Output Text Box ===
         self.output_text = ScrolledText(self.frame, height=self.OUTPUT_HEIGHT, wrap=tk.WORD)
-        self.output_text.grid(row=7, column=0, columnspan=2, padx=5, pady=5, sticky="nsew")
+        self.output_text.grid(row=7, column=0, columnspan=2, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y,
+                              sticky=GRID_STICKY_NSEW)
 
         # === Copy Button ===
         copy_btn = ttk.Button(self.frame, text="Copy to Clipboard", command=self._copy)
-        copy_btn.grid(row=8, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
+        copy_btn.grid(row=8, column=0, columnspan=2, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+                      pady=WIDGET_PADDING_Y)
 
         # === Separator ===
         separator = ttk.Separator(self.frame, orient="horizontal")
-        separator.grid(row=9, column=0, columnspan=2, sticky="nsew", pady=(10, 5))
+        separator.grid(row=9, column=0, columnspan=2, sticky=GRID_STICKY_NSEW, pady=(10, 5))
 
         # === Info Label ===
         self.platform_info_label = ttk.Label(self.frame, text="")
-        self.platform_info_label.grid(row=10, column=0, columnspan=2, sticky="nsew", pady=5, padx=5)
+        self.platform_info_label.grid(row=10, column=0, columnspan=2, sticky=GRID_STICKY_NSEW, pady=WIDGET_PADDING_Y,
+                                      padx=WIDGET_PADDING_X)
         self.platform_info_label.config(anchor="center", justify="center")
 
         # === Copyright Label ===
         self.copyright_label = ttk.Label(
-            self.frame, text="© 2025 olofmagn", font=("Segoe UI", 8, "italic"), foreground="gray50"
+            self.frame, text=COPYRIGHT_TEXT, font=COPYRIGHT_FONT, foreground=COPYRIGHT_COLOR
         )
 
-        self.copyright_label.grid(row=13, column=2, sticky="e", pady=(0, 10), padx=5)
-        
+        self.copyright_label.grid(row=12, column=2, sticky=GRID_STICKY_E, pady=(0, 10), padx=WIDGET_PADDING_X)
+
         # === Load templates initially ===
         self.load_templates_for_platform(self.platform)
-    
+
+    def _change_time_range(self, direction: int) -> None:
+        """
+        Change time range
+
+        Args:
+        - direction (int): Direction to navigate (-1 for prev, 1 for next)
+        """
+
+        current_value = self.current_lookback
+        new_value = cycle_time_range_value(current_value, direction, self.display_values)
+        self.lookback_var.set(new_value)
+
     def _setup_template_autocomplete(self) -> None:
         """
         Setup autocomplete
@@ -162,18 +328,18 @@ class QueryGui:
 
         def _on_select_commit(event: Optional[tk.Event] = None) -> str:
             """
-            Handler for when a suggestion is selected from the listbox.
+            Handler for when a suggestion is selected from the listbox
 
             Args:
-            - event (Optional[tk.Event]): The Tkinter event that triggered the handler.
+            - event (Optional[tk.Event]): The Tkinter event that triggered the handler
             """
 
             if self.listbox and self.listbox.curselection():
                 try:
-                    index= self.listbox.curselection()[0]
+                    index = self.listbox.curselection()[0]
                     selected = self.listbox.get(index)
                     self.template_var.set(selected)
-                    self._render_fields()  
+                    self._render_fields()
                 except IndexError:
                     pass
             if self.listbox:
@@ -184,33 +350,45 @@ class QueryGui:
             self.autocomplete_entry.icursor(tk.END)
             return "break"
 
+        def _on_return(event: Optional[tk.Event] = None) -> str:
+            """
+            Handler for the Return (Enter) key press event
+
+            Args:
+            - event (Optional[tk.Event]): The Tkinter event that triggered the handler
+
+            Returns:
+            - str: "break" to prevent default behavior
+            """
+
+            return _on_select_commit()
+
         def _update_suggestions(event: Optional[tk.Event] = None) -> str:
             """
             Handler for update suggestions
 
             Args:
-            - event (Optional[tk.Event]): The Tkinter event that triggered the handler.
+            - event (Optional[tk.Event]): The Tkinter event that triggered the handler
             """
 
             typed = self.template_var.get().lower()
-            # Show all if nothing is explictly typed.
-            matches = self._fuzzy_match(typed, list(self.templates.keys())) if typed else list(self.templates.keys())
+            matches = fuzzy_match(typed, list(self.templates.keys())) if typed else list(self.templates.keys())
 
             if self.listbox:
                 self._hide_listbox()
-                
+
             if not matches:
                 return "break"
 
             self.listbox = tk.Listbox(self.frame, height=min(5, len(matches)))
-            self.listbox.grid(row=2, column=1, sticky="ew", pady=5, padx=5)
+            self.listbox.grid(row=2, column=1, sticky=GRID_STICKY_EAST, pady=WIDGET_PADDING_Y, padx=WIDGET_PADDING_X)
 
             for match in matches:
                 self.listbox.insert(tk.END, match)
 
             self.listbox.select_set(0)
             self.listbox.activate(0)
-            
+
             self.listbox.bind("<ButtonRelease-1>", _on_select_commit)
             self.listbox.bind("<Return>", _on_return)
             self.listbox.bind("Escape", self._hide_listbox)
@@ -219,10 +397,10 @@ class QueryGui:
 
         def _on_listbox_nav(event: Optional[tk.Event] = None) -> str:
             """
-            Handler for navigating the autocomplete listbox using keyboard arrows.
+            Handler for navigating the autocomplete listbox using keyboard arrows
 
             Args:
-            - event (Optional[tk.Event]): The Tkinter event that triggered the handler.
+            - event (Optional[tk.Event]): The Tkinter event that triggered the handler
             """
 
             if not self.listbox:
@@ -248,19 +426,6 @@ class QueryGui:
             self.listbox.focus_set()
             return "break"
 
-        def _on_return(event: Optional[tk.Event] = None) -> str: 
-            """
-            Handler for the Return (Enter) key press event.
-
-            Args:
-            - event (Optional[tk.Event]): The Tkinter event that triggered the handler.
-
-            Returns:
-            - str: "break" to prevent default behavior.
-            """
-
-            return _on_select_commit()
-
         self.autocomplete_entry.bind("<Return>", _on_return)
         self.autocomplete_entry.bind("<KeyRelease>", _update_suggestions)
         self.autocomplete_entry.bind("<Down>", _on_listbox_nav)
@@ -268,13 +433,14 @@ class QueryGui:
 
     def _update_field_visibility(self) -> None:
         """
-        Update field visiblity info label for all platforms
+        Update field visibility info label for all platforms
         """
 
         self.platform_info_label.config(text=self._get_platform_info_text())
 
         if self.platform.lower() == "defender":
-            self.checkbox.grid(row=5, column=0, columnspan=2 ,padx=5, pady=5, sticky="nsew")
+            self.checkbox.grid(row=5, column=0, columnspan=2, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y,
+                               sticky=GRID_STICKY_NSEW)
         else:
             self.checkbox.grid_forget()  # hide checkbox
 
@@ -282,17 +448,16 @@ class QueryGui:
     # TEMPLATE & DATA MANAGEMENT
     # ==========================================
 
-    def load_templates_for_platform(self, platform: str) -> None: 
+    def load_templates_for_platform(self, platform: str) -> None:
         """
         Loads templates for a given platform
 
         Args:
-        - platform: the platform, e.g., 'qradar', 'defender' or 'elastic'.
+        - platform: the platform, e.g., 'qradar', 'defender' or 'elastic'
         """
 
         if platform in self.template_cache:
             self.templates = self.template_cache[platform]
-            return 
 
         try:
             self.templates = load_templates(platform)
@@ -304,10 +469,10 @@ class QueryGui:
         self.template_var.set("")
         self.autocomplete_entry["values"] = list(self.templates.keys())
         self._clear_fields()
-    
+
     def _clear_fields(self) -> None:
         """
-        Destroy all parameter widgets and clear state.
+        Destroy all parameter widgets and clear state
         """
 
         for widget in self.inputs_frame.winfo_children():
@@ -319,20 +484,25 @@ class QueryGui:
 
     def _render_fields(self, event: Optional[tk.Event] = None) -> None:
         """
-        Renders fields event handler.
+        Renders fields event handler
 
         Args:
-        - event (Optional[tk.Event]): The Tkinter event that triggered the handler.
+        - event (Optional[tk.Event]): The Tkinter event that triggered the handler
         """
 
         self._clear_fields()
 
-        name = self.template_var.get()
-        template = self.templates[name]
+        template_name = self.current_template
+        if not template_name in self.templates:
+            messagebox.showerror("Invalid template", f"Template {template_name} not found")
+            return
+
+        template = self.templates[template_name]
         optional_fields = template.get("optional_fields", {})
 
         if optional_fields:
-            self.inputs_frame.grid(row=3, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
+            self.inputs_frame.grid(row=3, column=0, columnspan=2, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+                                   pady=WIDGET_PADDING_Y)
         else:
             self.inputs_frame.grid_remove()
 
@@ -345,14 +515,14 @@ class QueryGui:
 
             if help_text:
                 label_text += f" ({help_text})"
-            
+
             # Optional fields layout
             label = ttk.Label(self.inputs_frame, text=label_text + ":")
             entry_var = tk.StringVar()
             entry = ttk.Entry(self.inputs_frame, textvariable=entry_var)
 
-            label.grid(row=i, column=0, sticky="nsew", padx=5, pady=5)
-            entry.grid(row=i, column=1, sticky="nsew", padx=5, pady=5)
+            label.grid(row=i, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
+            entry.grid(row=i, column=1, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
 
             self.param_rows.append((label, entry, entry_var))
 
@@ -365,20 +535,21 @@ class QueryGui:
     # CORE BUSINESS LOGIC
     # ==========================================
 
-    def generate(self) -> None:
+    def _generate(self) -> int | None:
         """
-        Builds an query for a given platform.
+        Builds a query for a given platform
         """
 
-        # Normalize
-        template_name = self.template_var.get().lower().strip()
-        platform = self.platform_var.get().lower()
+        template_name = self.current_template
+        platform = self.current_platform
+        lookback = self.current_lookback
 
-        lookback = self.lookback_var.get()
-
-        if not template_name or template_name not in self.templates:
+        if not template_name:
             messagebox.showerror("Error", "Invalid template choice.")
             return 0
+
+        if template_name not in self.templates:
+            messagebox.showerror("Error", "Template '{}' not found.".format(template_name))
 
         template = self.templates[template_name]
         duration = normalize_lookback(lookback, self.platform)
@@ -426,53 +597,36 @@ class QueryGui:
         Used to detect platform change so templates gets correctly loaded
         """
 
-        plat = self.platform_var.get()
-        if plat: 
+        plat = self.current_platform
+        if plat:
             self.platform = plat
             self.load_templates_for_platform(plat)
-        
+
         # Clear the template input field and hide suggestions
         self.template_var.set("")
         if self.listbox:
             self._hide_listbox()
 
         self._update_field_visibility()
-    
-    def _change_time_range(self, direction: int) -> None:
-        current = self.lookback_var.get().strip().upper()
-
-        if current in self.display_to_internal:
-            internal = self.display_to_internal[current]
-        elif current.lower() in self.internal_to_display:
-            internal = current.lower()
-        else:
-            internal = self.INTERNAL_TIME_RANGES[0]
-
-        # Find index in internal list for cycling
-        idx = self.INTERNAL_TIME_RANGES.index(internal)
-        new_idx = (idx + direction) % len(self.INTERNAL_TIME_RANGES)
-
-        # Update display label in entry
-        new_display = self.internal_to_display[self.INTERNAL_TIME_RANGES[new_idx]]
-        self.lookback_var.set(new_display)
 
     def _hide_listbox(self, event: Optional[tk.Event] = None) -> str:
         """
-        Hides the suggestion listbox if it exists.
+        Hides the suggestion listbox if it exists
 
         Args:
-            event (Optional[tk.Event]): The Tkinter event that triggered the action.
+            event (Optional[tk.Event]): The Tkinter event that triggered the action
         """
+
         if hasattr(self, 'listbox') and self.listbox:
             self.listbox.destroy()
             self.listbox = None
         return "break"
-        
+
     # ==========================================
     # UTILITY METHODS
     # ==========================================
 
-    def _get_platform_info_text(self) -> str:
+    def _get_platform_info_text(self) -> str | None:
         """
         Get the current platform in use.
 
@@ -491,31 +645,3 @@ class QueryGui:
                 return "Using Microsoft Defender query mode."
             case _:
                 return None
-
-    def _fuzzy_match(self, input_text: str, options: List[str]) -> List[str]:
-        """
-        Args:
-        - input_text (str): An input string.
-        - options (List[str]) : A list of possible options.
-
-        Returns:
-        - A list of options that contain all characters in order from input_text.
-
-        """
-
-        return [opt for opt in options if self._is_subsequence(input_text, opt)]
-
-    def _is_subsequence(self, small: str, large: str) -> bool:
-        """
-        Args:
-        - small (str): The input string to match.
-        - large (str): The string to search within.
-
-        Returns:
-        - bool: True if 'small' is prefix of any part of 'large'. 
-        """
-
-        small = small.lower()
-        parts = re.split(r'[_\s]', large.lower())
-
-        return any(part.startswith(small) for part in parts)
