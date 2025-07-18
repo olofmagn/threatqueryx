@@ -1,9 +1,9 @@
 base_queries:
-  authentication: "SELECT DATEFORMAT(starttime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username FROM events"
-  network: "SELECT DATEFORMAT(starttime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, sourceport, destinationip, destinationport FROM events"
-  process: "SELECT DATEFORMAT(starttime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username, \"Command\", \"Process Name\", FROM events"
-  exploit: "SELECT DATEFORMAT(starttime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, destinationip, \"Command\" FROM events"
-  dns: "SELECT DATEFORMAT(starttime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, destinationip, \"URL Domain\" FROM events"
+  authentication: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username FROM events"
+  network: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, sourceport, destinationip, destinationport FROM events"
+  process: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username, \"Command\", \"Process Name\" FROM events"
+  exploit: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, destinationip, \"Command\" FROM events"
+  dns: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, destinationip, \"URL Domain\" FROM events"
 
 failed_logins:
   description: "Search for authentication failures with optional filters."
@@ -85,11 +85,11 @@ rdp_loopback_traffic:
     source_port:
       pattern: "sourceport = {value}"
       help: "Filter for a specific source port"
-      validation: "port"
+      validation: "integer"
     destination_port:
       pattern: "destinationport = {value}"
       help: "Filter for a specific destination port"
-      validation: "port"
+      validation: "integer"
 
 builtin_account_enabled:
   description: "Detect when built-in accounts like Guest, DefaultAccount, or Administrator are enabled."
@@ -142,6 +142,7 @@ suspicious_command_flags:
       pattern: "\"Command\" ILIKE '%{value}%'"
       help: "Filter for specific command content"
 
+# TODO
 dns_txt_base64_payloads:
   description: "Detect suspicious DNS requests."
   base: "{dns}"
@@ -149,7 +150,7 @@ dns_txt_base64_payloads:
     - "logsourcetypename(devicetype) ILIKE '%Forti%'"
   optional_fields:
     url_domain:
-      pattern: "\"URL Domain\" = '%{value}%'"
+      pattern: "\"URL Domain\" ILIKE '%{value}%'"
       help: "URL domain to filter on"
     source_ip:
       pattern: "sourceip = '{value}'"

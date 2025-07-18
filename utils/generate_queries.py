@@ -49,8 +49,9 @@ def build_query(template: Dict[str, Any], inputs: Dict[str, str], duration: str,
 
     match platform:
         case "qradar":
+            order_by = "devicetime DESC"
             condition_string = ' and '.join(conditions) if conditions else "true"
-            query = f"{base} where {condition_string} LAST {duration}"
+            query = f"{base} where {condition_string} ORDER BY {order_by} LAST {duration}"
         case "defender":
             condition_string = ' and '.join(conditions) if conditions else "true"
             query = f"{base} \n | where {condition_string} \n | where Timestamp > ago({duration})"
@@ -59,7 +60,7 @@ def build_query(template: Dict[str, Any], inputs: Dict[str, str], duration: str,
                 query += f"\n | {template['post_pipeline']}"
         case "elastic":
             condition_string = ' and '.join(conditions) if conditions else "*"
-            query = f"{base} AND {condition_string} AND @timestamp >= now-{duration}"
+            query = f"{base} and {condition_string} and @timestamp >= now-{duration}"
         case _:
             raise ValueError(
                 f"Unsupported platform '{platform}'. Must be 'elastic', 'defender', or 'qradar'"
