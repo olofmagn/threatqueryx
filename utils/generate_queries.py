@@ -6,7 +6,7 @@ from typing import Dict, Any
 
 
 def build_query(template: Dict[str, Any], inputs: Dict[str, str], duration: str, platform: str,
-                include_post_pipeline: bool = False) -> str:
+                base_queries: Dict[str, str], include_post_pipeline: bool = False) -> str:
     """
     Builds a query with a template, inputs, duration and the provided platform
 
@@ -15,6 +15,7 @@ def build_query(template: Dict[str, Any], inputs: Dict[str, str], duration: str,
         inputs (Dict[str, str]): User-provided field values for optional parameters
         duration (str): A duration string for the time range (e.g., "1h", "30 MINUTES")
         platform (str): A platform for issuing the queries ("qradar", "defender", "elastic")
+        base_queries (Dict[str, str]): A dictionary of base queries keyed by platform
         include_post_pipeline (bool): Whether to include post-processing pipeline (Defender only)
 
     Returns:
@@ -25,6 +26,13 @@ def build_query(template: Dict[str, Any], inputs: Dict[str, str], duration: str,
         raise KeyError("Template missing required 'base' field")
 
     base = template["base"]
+    if base.startswith("{") and base.endswith("}"):
+        key_name = base[1:-1]
+        if key_name in base_queries:
+            base = base_queries[key_name]
+        else:
+            raise ValueError(f"Base query '{key_name}' not found in base_queries")
+
     conditions = list(template.get("required_fields", []))
 
     # Add optional field conditions

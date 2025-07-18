@@ -13,9 +13,10 @@ from utils.generate_queries import build_query
 
 
 class QueryCli:
-    def __init__(self, platform: str, templates: Dict[str, Any]) -> None:
+    def __init__(self, platform: str, templates: Dict[str, Any], base_queries: Dict[str, str]) -> None:
         self.platform = platform
         self.templates = templates
+        self.base_queries = base_queries
         self.include_post_pipeline = False
 
     def build_query_for_cli(self) -> None:
@@ -32,7 +33,7 @@ class QueryCli:
         inputs = self._get_inputs(template)
         duration = self._get_lookback()
 
-        query = build_query(template, inputs, duration, self.platform, self.include_post_pipeline)
+        query = build_query(template, inputs, duration, self.platform, self.base_queries, self.include_post_pipeline)
         print("Generated query:\n")
         print(query)
 
@@ -64,7 +65,8 @@ class QueryCli:
             if template_name in ("quit", None):
                 sys.exit(1)
             if template_name == "back":
-                self.platform, self.templates = resolve_platform_and_templates(mode="cli", platform=None)
+                self.platform, self.templates, self.base_queries = resolve_platform_and_templates(mode="cli",
+                                                                                                  platform=None)
                 continue  # Restart template selection loop
 
             template = self.templates[template_name]

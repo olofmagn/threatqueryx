@@ -36,10 +36,10 @@ def main():
     if mode in ("quit", None):
         sys.exit(1)
 
-    platform, templates = resolve_platform_and_templates(mode, platform)
+    platform, templates, base_queries = resolve_platform_and_templates(mode, platform)
 
     if mode == "cli":
-        cli = QueryCli(platform, templates)
+        cli = QueryCli(platform, templates, base_queries)
         cli.build_query_for_cli()
     else:
         root = tk.Tk()
