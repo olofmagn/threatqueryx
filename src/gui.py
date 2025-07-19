@@ -462,7 +462,7 @@ class QueryGui:
         else:
             try:
                 config = load_templates(platform)
-                self.base_queries = config["base_queries"]
+                self.base_queries = config.get("base_queries", {})
                 self.templates = {k: v for k, v in config.items() if k != 'base_queries'}
                 self.template_cache[platform] = (self.templates, self.base_queries)
             except Exception as e:

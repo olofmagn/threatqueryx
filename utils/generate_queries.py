@@ -26,7 +26,7 @@ def build_query(template: Dict[str, Any], inputs: Dict[str, str], duration: str,
         raise KeyError("Template missing required 'base' field")
 
     base = template["base"]
-    if base.startswith("{") and base.endswith("}"):
+    if base_queries and base.startswith("{") and base.endswith("}"):
         key_name = base[1:-1]
         if key_name in base_queries:
             base = base_queries[key_name]
