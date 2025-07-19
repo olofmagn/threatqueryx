@@ -270,7 +270,7 @@ class QueryGui:
 
         self.checkbox = tk.Checkbutton(
             self.frame,
-            text="Include summarization",
+            text="Apply field selection",
             variable=self.include_post_pipeline_var
         )
 
