@@ -617,7 +617,7 @@ class QueryGui:
         Hides the suggestion listbox if it exists
 
         Args:
-            event (Optional[tk.Event]): The Tkinter event that triggered the action
+        - event (Optional[tk.Event]): The Tkinter event that triggered the action
         """
 
         if hasattr(self, 'listbox') and self.listbox:

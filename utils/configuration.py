@@ -22,10 +22,10 @@ def load_templates(platform: str) -> Dict[str, Any]:
     Loads templates for the specified SIEM platform
 
     Args:
-        platform (str): The SIEM platform name (e.g., 'qradar', 'elastic', 'defender')
+    - platform (str): The SIEM platform name (e.g., 'qradar', 'elastic', 'defender')
 
     Returns:
-        Dict[str, Any]: Parsed YAML template as a dictionary
+    - Dict[str, Any]: Parsed YAML template as a dictionary
     """
 
     file_path = os.path.join("templates", f"{platform.lower()}.yaml")
@@ -46,11 +46,11 @@ def validate(value: str, val_type: Optional[str]) -> Tuple[bool, str]:
     Validates a given value against a specific type
 
     Args:
-        value (str): The value to validate (e.g., IP address or port)
-        val_type (Optional[str]): The type to validate against (e.g., 'ip', 'port', 'domain')
+    - value (str): The value to validate (e.g., IP address or port)
+    - val_type (Optional[str]): The type to validate against (e.g., 'ip', 'port', 'domain')
 
     Returns:
-        Tuple[bool, str]: Whether the value is valid with a result or error message
+    - Tuple[bool, str]: Whether the value is valid with a result or error message
     """
 
     if val_type == "ip":
@@ -70,11 +70,11 @@ def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: Option
     Resolves platform and templates given the mode and platform
 
     Args:
-        mode (Literal["cli", "gui"]): The interface mode (cli or gui)
-        platform (Optional[str]): The platform to use, e.g., 'qradar', 'elastic' or 'defender'
+    - mode (Literal["cli", "gui"]): The interface mode (cli or gui)
+    - platform (Optional[str]): The platform to use, e.g., 'qradar', 'elastic' or 'defender'
 
     Returns:
-        Tuple[str, Optional[Dict[str, Any]], Optional[Dict[str, str]]]: The platform name, templates, and base_queries
+    - Tuple[str, Optional[Dict[str, Any]], Optional[Dict[str, str]]]: The platform name, templates, and base_queries
     """
 
     if mode == "cli":
@@ -112,7 +112,7 @@ def choose_mode() -> Optional[str]:
     Choose between GUI and CLI mode
 
     Returns:
-        Optional[str]: The chosen mode, or None if quit is selected
+    - Optional[str]: The chosen mode, or None if quit is selected
     """
 
     mode = questionary.select(
@@ -132,11 +132,11 @@ def normalize_lookback(lookback: str, platform: str) -> Optional[str]:
     Normalizes lookback values for different platforms
 
     Args:
-        lookback (str): The string value to transform to correct format
-        platform (str): The platform name for format determination
+    - lookback (str): The string value to transform to correct format
+    - platform (str): The platform name for format determination
 
     Returns:
-        Optional[str]: A lookback value in the correct format, or None if invalid
+    - Optional[str]: A lookback value in the correct format, or None if invalid
     """
 
     lookback = lookback.strip().lower()

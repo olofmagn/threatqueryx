@@ -11,15 +11,15 @@ def build_query(template: Dict[str, Any], inputs: Dict[str, str], duration: str,
     Builds a query with a template, inputs, duration and the provided platform
 
     Args:
-        template (Dict[str, Any]): A template dictionary containing query structure
-        inputs (Dict[str, str]): User-provided field values for optional parameters
-        duration (str): A duration string for the time range (e.g., "1h", "30 MINUTES")
-        platform (str): A platform for issuing the queries ("qradar", "defender", "elastic")
-        base_queries (Dict[str, str]): A dictionary of base queries keyed by platform
-        include_post_pipeline (bool): Whether to include post-processing pipeline (Defender only)
+    - template (Dict[str, Any]): A template dictionary containing query structure
+    - inputs (Dict[str, str]): User-provided field values for optional parameters
+    - duration (str): A duration string for the time range (e.g., "1h", "30 MINUTES")
+    - platform (str): A platform for issuing the queries ("qradar", "defender", "elastic")
+    - base_queries (Dict[str, str]): A dictionary of base queries keyed by platform
+    - include_post_pipeline (bool): Whether to include post-processing pipeline (Defender only)
 
     Returns:
-        str: A formatted query for the specified platform
+    - str: A formatted query for the specified platform
     """
 
     if "base" not in template:
