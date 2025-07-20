@@ -6,10 +6,10 @@ failed_logins:
   optional_fields:
     user.name:
       pattern: "user.name: '{value}'"
-      help: "The username to filter on (e.g., admin)"
+      help: "Filter by username"
     source.ip:
       pattern: "source.ip: '{value}'"
-      help: "Source IP address of the login attempt"
+      help: "Filter by sourceip"
       validation: "ip"
 
 firewall_block:
@@ -20,10 +20,10 @@ firewall_block:
   optional_fields:
     network.protocol:
       pattern: "network.protocol: '{value}'"
-      help: "Network protocol (e.g., tcp, udp, https)"
+      help: "Filter by network protocol"
     destination.port:
-      pattern: "destination.port: {value}"
-      help: "Destination port number"
+      pattern: "destination.port: '{value}'"
+      help: "Filter by destinationport"
       validation: "integer"
 
 dns_domains:
@@ -34,10 +34,10 @@ dns_domains:
   optional_fields:
     url.domain:
       pattern: "url.domain: '{value}'"
-      help: "Specific domain to filter on"
+      help: "Filter by domain name"
     source.ip:
       pattern: "source.ip: '{value}'"
-      help: "Source IP of suspicious DNS queries"
+      help: "Filter by sourceip"
       validation: "ip"
 
 rce_attempts:
@@ -48,15 +48,15 @@ rce_attempts:
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
-      help: "Source IP address of the exploit attempt"
+      help: "Filter by sourceip"
       validation: "ip"
     destination.ip:
       pattern: "destination.ip: '{value}'"
-      help: "Destination IP of the exploit attempt"
+      help: "Filter by destinationip"
       validation: "ip"
     process.executable:
       pattern: "process.executable: '{value}'"
-      help: "Process executable of the exploit attempt"
+      help: "Filter by process executable"
 
 powershell_execution:
   description: "Find suspicious PowerShell execution events."
@@ -66,10 +66,10 @@ powershell_execution:
   optional_fields:
     user.name:
       pattern: "user.name: '{value}'"
-      help: "Username running PowerShell"
+      help: "Filter by username"
     message:
       pattern: "message: '*{value}*'"
-      help: "Message content to filter on"
+      help: "Filter by message content"
 
 rdp_loopback_traffic:
   description: "Detect RDP (port 3389) traffic involving loopback addresses (127.0.0.0/8) using event code 5156."
@@ -81,11 +81,11 @@ rdp_loopback_traffic:
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
-      help: "Filter for a specific source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
     destination.ip:
       pattern: "destination.ip: '{value}'"
-      help: "Filter for a specific destination IP address"
+      help: "Filter by destinationip"
       validation: "ip"
 
 builtin_account_enabled:
@@ -97,7 +97,7 @@ builtin_account_enabled:
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
-      help: "Filter by source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
 
 service_task_creation_commands:
@@ -109,14 +109,14 @@ service_task_creation_commands:
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
-      help: "Filter by source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
     user.name:
       pattern: "user.name: '{value}'"
       help: "Filter by username"
     process.command_line:
       pattern: "process.command_line: '*{value}*'"
-      help: "Filter for commands containing specific strings"
+      help: "Filter by command line content"
 
 suspicious_command_flags:
   description: "Detect process creation events with commands containing /transfer, /priority, or /download flags using event code 4688."
@@ -127,7 +127,7 @@ suspicious_command_flags:
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
-      help: "Filter by source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
     user.name:
       pattern: "user.name: '{value}'"
@@ -142,12 +142,12 @@ dns_txt_base64_payloads:
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
-      help: "Filter by source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
     destination.ip:
       pattern: "destination.ip: '{value}'"
-      help: "Filter by destination IP address"
+      help: "Filter by destinationip"
       validation: "ip"
     dns.question.type:
       pattern: "dns.question.type: '{value}'"
-      help: "Filter by DNS request type"
+      help: "Filter by DNS query type"

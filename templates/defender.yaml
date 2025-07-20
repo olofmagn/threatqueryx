@@ -6,10 +6,10 @@ failed_logins:
   optional_fields:
     username:
       pattern: "AccountName == '{value}'"
-      help: "Username that failed to sign in"
+      help: "Filter by username"
     source_ip:
       pattern: "IPAddress == '{value}'"
-      help: "Source IP address of the logon attempt"
+      help: "Filter by sourceip"
       validation: "ip"
   post_pipeline: "project AccountName, DeviceName, IPAddress, Timestamp"
 
@@ -19,9 +19,9 @@ phishing_site:
   required_fields:
     - "ActionType == 'ConnectionSuccess'"
   optional_fields:
-    domain:
+    url:
       pattern: "RemoteUrl contains '{value}'"
-      help: "The domain being connected to"
+      help: "Filter by remote URL"
   post_pipeline: "project InitiatingProcessAccountUpn, DeviceName, RemoteUrl, Timestamp, DeviceId"
 
 dns_exfiltration:
@@ -31,9 +31,9 @@ dns_exfiltration:
     - "ActionType == 'ConnectionSuccess'"
     - "strlen(RemoteUrl) > 100"
   optional_fields:
-    domain:
+    url:
       pattern: "RemoteUrl contains '{value}'"
-      help: "Suspicious domain to hunt for"
+      help: "Filter by remote URL"
   post_pipeline: "project DeviceName, RemoteUrl, Timestamp, InitiatingProcessAccountUpn"
 
 rce_attempts:
@@ -45,5 +45,5 @@ rce_attempts:
   optional_fields:
     username:
       pattern: "AccountName == '{value}'"
-      help: "Account executing suspicious commands"
+      help: "Filter by username"
   post_pipeline: "project AccountName, DeviceName, FileName, ProcessCommandLine, Timestamp"

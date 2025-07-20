@@ -14,10 +14,10 @@ failed_logins:
   optional_fields:
     username:
       pattern: "username ILIKE '{value}'"
-      help: "The username to filter on (e.g., admin)"
+      help: "Filter by username"
     source_ip:
       pattern: "sourceip = '{value}'"
-      help: "Source IP address of the login attempt"
+      help: "Filter by sourceip address"
       validation: "ip"
 
 firewall_block:
@@ -28,10 +28,10 @@ firewall_block:
   optional_fields:
     protocol:
       pattern: "PROTOCOLNAME(protocolid) = '{value}'"
-      help: "Network protocol (e.g., TCP, UDP)"
+      help: "Filter by protocol"
     destination_port:
       pattern: "destinationport = {value}"
-      help: "Destination port number"
+      help: "Filter by destinationport"
       validation: "integer"
 
 rce_attempts:
@@ -42,11 +42,11 @@ rce_attempts:
   optional_fields:
     source_ip:
       pattern: "sourceip = '{value}'"
-      help: "Source IP address of the exploit attempt"
+      help: "Filter by sourceip address"
       validation: "ip"
     destination_ip:
       pattern: "destinationip = '{value}'"
-      help: "Destination IP address of the exploit attempt"
+      help: "Filter by destinationip"
       validation: "ip"
 
 powershell_execution:
@@ -58,13 +58,13 @@ powershell_execution:
   optional_fields:
     username:
       pattern: "username = '{value}'"
-      help: "Username running PowerShell"
+      help: "Filter by username"
     process_name:
       pattern: "\"Process Name\" ILIKE '%{value}%'"
-      help: "Name of the PowerShell process"
+      help: "Filter by process name"
     parent_process_name:
       pattern: "\"Parent Process Name\" ILIKE '%{value}%'"
-      help: "Name of the parent process"
+      help: "Filter by parent process name"
 
 rdp_loopback_traffic:
   description: "Detect RDP (port 3389) traffic involving loopback addresses (127.0.0.0/8)."
@@ -76,19 +76,19 @@ rdp_loopback_traffic:
   optional_fields:
     source_ip:
       pattern: "sourceip = '{value}'"
-      help: "Filter for a specific source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
     destination_ip:
       pattern: "destinationip = '{value}'"
-      help: "Filter for a specific destination IP address"
+      help: "Filter by destinationip"
       validation: "ip"
     source_port:
       pattern: "sourceport = {value}"
-      help: "Filter for a specific source port"
+      help: "Filter by sourceport"
       validation: "integer"
     destination_port:
       pattern: "destinationport = {value}"
-      help: "Filter for a specific destination port"
+      help: "Filter by destinationport"
       validation: "integer"
 
 builtin_account_enabled:
@@ -101,7 +101,7 @@ builtin_account_enabled:
   optional_fields:
     source_ip:
       pattern: "sourceip = '{value}'"
-      help: "Filter by source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
 
 service_task_creation_commands:
@@ -114,14 +114,14 @@ service_task_creation_commands:
   optional_fields:
     source_ip:
       pattern: "sourceip = '{value}'"
-      help: "Filter by source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
     username:
       pattern: "username = '{value}'"
       help: "Filter by username"
     command_contains:
       pattern: "\"Command\" ILIKE '%{value}%'"
-      help: "Filter for specific command content"
+      help: "Filter for command content"
 
 suspicious_command_flags:
   description: "Detect process creation events with commands containing /transfer, /priority, or /download flags."
@@ -133,14 +133,14 @@ suspicious_command_flags:
   optional_fields:
     source_ip:
       pattern: "sourceip = '{value}'"
-      help: "Filter by source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
     username:
       pattern: "username = '{value}'"
       help: "Filter by username"
     command_contains:
       pattern: "\"Command\" ILIKE '%{value}%'"
-      help: "Filter for specific command content"
+      help: "Filter for command content"
 
 # TODO
 dns_txt_base64_payloads:
@@ -154,9 +154,9 @@ dns_txt_base64_payloads:
       help: "URL domain to filter on"
     source_ip:
       pattern: "sourceip = '{value}'"
-      help: "Filter by source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
     destination_ip:
       pattern: "destinationip = '{value}'"
-      help: "Filter by destination IP address"
+      help: "Filter by destinationip"
       validation: "ip"
