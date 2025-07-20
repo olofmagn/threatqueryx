@@ -18,23 +18,23 @@ from utils.configuration import (
 
 from utils.ui_constants import (
     DEFAULT_MODE,
-    PLATFORMS,
-    TIME_RANGES,
     DEFAULT_TIME_RANGE_INDEX,
     DEFAULT_WINDOW_WIDTH,
-    WINDOW_PADDING,
     DEFAULT_WINDOW_HEIGHT,
     DEFAULT_OUTPUT_HEIGHT,
+    WINDOW_PADDING,
     WINDOW_TITLE,
     GRID_STICKY_EAST,
     GRID_STICKY_NSEW,
     GRID_STICKY_E,
+    WIDGET_PADDING_X,
+    WIDGET_PADDING_Y,
+    PLATFORMS,
+    TIME_RANGES,
+    TIME_ENTRY_WIDTH,
     COPYRIGHT_TEXT,
     COPYRIGHT_FONT,
     COPYRIGHT_COLOR,
-    WIDGET_PADDING_X,
-    WIDGET_PADDING_Y,
-    TIME_ENTRY_WIDTH,
     ARROW_BUTTON_WIDTH,
     ARROW_BUTTON_PADDING
 )
@@ -140,6 +140,7 @@ class QueryGui:
         self.platforms = PLATFORMS
         self.platform = DEFAULT_MODE
         self.templates = {}
+        self.base_queries = {}
         self.fields = {}
 
         # Window size constants
@@ -269,7 +270,7 @@ class QueryGui:
 
         self.checkbox = tk.Checkbutton(
             self.frame,
-            text="Include summarization",
+            text="Apply field selection",
             variable=self.include_post_pipeline_var
         )
 
@@ -457,14 +458,16 @@ class QueryGui:
         """
 
         if platform in self.template_cache:
-            self.templates = self.template_cache[platform]
-
-        try:
-            self.templates = load_templates(platform)
-            self.template_cache[platform] = self.templates
-        except Exception as e:
-            messagebox.showerror("Error loading templates", str(e))
-            self.templates = {}
+            self.templates, self.base_queries = self.template_cache[platform]
+        else:
+            try:
+                config = load_templates(platform)
+                self.base_queries = config.get("base_queries", {})
+                self.templates = {k: v for k, v in config.items() if k != 'base_queries'}
+                self.template_cache[platform] = (self.templates, self.base_queries)
+            except Exception as e:
+                messagebox.showerror("Error loading templates", str(e))
+                self.templates = {}
 
         self.template_var.set("")
         self.autocomplete_entry["values"] = list(self.templates.keys())
@@ -572,7 +575,7 @@ class QueryGui:
         include_post = self.include_post_pipeline_var.get() if platform == "defender" else False
 
         try:
-            query = build_query(template, inputs, duration, platform, include_post)
+            query = build_query(template, inputs, duration, platform, self.base_queries, include_post)
             self.output_text.delete("1.0", tk.END)
             self.output_text.insert(tk.END, query)
         except Exception as e:

@@ -1,155 +1,162 @@
+base_queries:
+  authentication: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username FROM events"
+  network: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, sourceport, destinationip, destinationport FROM events"
+  process: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username, \"Command\", \"Process Name\" FROM events"
+  exploit: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, destinationip, \"Command\" FROM events"
+  dns: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, destinationip, \"URL Domain\" FROM events"
+
 failed_logins:
   description: "Search for authentication failures with optional filters."
-  base: "SELECT * FROM events"
+  base: "{authentication}"
   required_fields:
     - "logsourcename(logsourceid) ILIKE 'Windows%'"
     - "qidname(qid) = 'Authentication Failure'"
   optional_fields:
     username:
-      pattern: "username = '{value}'"
-      help: "The username to filter on (e.g., admin)"
+      pattern: "username ILIKE '{value}'"
+      help: "Filter by username"
     source_ip:
       pattern: "sourceip = '{value}'"
-      help: "sourceip address of the login attempt"
+      help: "Filter by sourceip address"
       validation: "ip"
 
 firewall_block:
   description: "Detect firewall blocks by protocol and port."
-  base: "SELECT * FROM events"
+  base: "{network}"
   required_fields:
     - "logsourcename(logsourceid) ILIKE 'Forti%'"
   optional_fields:
     protocol:
       pattern: "PROTOCOLNAME(protocolid) = '{value}'"
-      help: "Network protocol (e.g., TCP, UDP)"
-    port:
-      pattern: "destinationport = '{value}'"
-      help: "Destination port number"
+      help: "Filter by protocol"
+    destination_port:
+      pattern: "destinationport = {value}"
+      help: "Filter by destinationport"
       validation: "integer"
 
 rce_attempts:
   description: "Detect potential remote command execution attempts in logs."
-  base: "SELECT * FROM events"
+  base: "{exploit}"
   required_fields:
     - "categoryname(category) = 'Exploit'"
   optional_fields:
     source_ip:
       pattern: "sourceip = '{value}'"
-      help: "sourceip address of the exploit attempt"
+      help: "Filter by sourceip address"
       validation: "ip"
-    dst_ip:
-      pattern: "destinationip= '{value}'"
-      help: "Destination ip of the exploit attempt"
+    destination_ip:
+      pattern: "destinationip = '{value}'"
+      help: "Filter by destinationip"
+      validation: "ip"
 
 powershell_execution:
   description: "Find suspicious PowerShell execution events."
-  base: "SELECT * FROM events"
+  base: "{process}"
   required_fields:
-    - "logsourcename(logsourceid) = 'Windows%'"
-    - "Command ILIKE '%PowerShell%'"
+    - "logsourcename(logsourceid) ILIKE 'Windows%'"
+    - "\"Command\" ILIKE '%powershell%'"
   optional_fields:
     username:
       pattern: "username = '{value}'"
-      help: "Username running PowerShell"
+      help: "Filter by username"
     process_name:
-      pattern: "PROCESSNAME = '{value}'"
-      help: "Name of the PowerShell process"
+      pattern: "\"Process Name\" ILIKE '%{value}%'"
+      help: "Filter by process name"
     parent_process_name:
-      pattern: "Parent Process Name = '{value}'"
-      help: "Name of the parent process name"
+      pattern: "\"Parent Process Name\" ILIKE '%{value}%'"
+      help: "Filter by parent process name"
 
 rdp_loopback_traffic:
-  description: "Detect RDP (port 3389) traffic involving loopback addresses (127.0.0.0/8) using Event ID 5156."
-  base: "SELECT sourceip, sourceport, destinationip, destinationport FROM events"
+  description: "Detect RDP (port 3389) traffic involving loopback addresses (127.0.0.0/8)."
+  base: "{network}"
   required_fields:
-    - "eventid = 5156"
+    - "eventid = '5156'"
     - "(sourceport = '3389' or destinationport = '3389')"
     - "(INCIDR('127.0.0.0/8', sourceip) or INCIDR('127.0.0.0/8', destinationip))"
   optional_fields:
     source_ip:
-      pattern: "sourceip= '{value}'"
-      help: "Filter for a specific source IP address"
+      pattern: "sourceip = '{value}'"
+      help: "Filter by sourceip"
       validation: "ip"
     destination_ip:
-      pattern: "destinationip= '{value}'"
-      help: "Filter for a specific destination IP address"
+      pattern: "destinationip = '{value}'"
+      help: "Filter by destinationip"
       validation: "ip"
     source_port:
-      pattern: "sourceport= '{value}'"
-      help: "Filter for a specific source port"
-      validation: "port"
+      pattern: "sourceport = {value}"
+      help: "Filter by sourceport"
+      validation: "integer"
     destination_port:
-      pattern: "destinationport= '{value}'"
-      help: "Filter for a specific destination port"
-      validation: "port"
+      pattern: "destinationport = {value}"
+      help: "Filter by destinationport"
+      validation: "integer"
 
 builtin_account_enabled:
-  description: "Detect when built-in accounts like Guest, DefaultAccount, or Administrator are enabled (Event ID 4722)."
-  base: "SELECT * FROM events"
+  description: "Detect when built-in accounts like Guest, DefaultAccount, or Administrator are enabled."
+  base: "{authentication}"
   required_fields:
-    - "(logsourcetypename(devicetype) ILIKE '%Microsoft Windows Security Event Log%')"
-    - "qidEventId = '4722'"
+    - "logsourcetypename(devicetype) ILIKE '%Microsoft Windows Security Event Log%'"
+    - "eventid = '4722'"
     - "(username ILIKE 'guest' or username ILIKE 'defaultaccount' or username ILIKE 'administrator')"
   optional_fields:
     source_ip:
       pattern: "sourceip = '{value}'"
-      help: "Filter by source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
 
 service_task_creation_commands:
   description: "Detect process creation events involving commands for service creation or scheduled tasks."
-  base: "SELECT * FROM events"
+  base: "{process}"
   required_fields:
-    - "(logsourcetypename(logsourceid) ILIKE 'Microsoft%')"
-    - "qidEventId = '4688'"
-    - "(\"Command\" ILIKE 'create' or \"Command\" ILIKE '/SC' or \"Command\" ILIKE '/TN')"
+    - "logsourcetypename(devicetype) ILIKE '%Microsoft%'"
+    - "eventid = '4688'"
+    - "(\"Command\" ILIKE '%create%' or \"Command\" ILIKE '%/SC%' or \"Command\" ILIKE '%/TN%')"
   optional_fields:
     source_ip:
       pattern: "sourceip = '{value}'"
-      help: "Filter by source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
     username:
-      pattern: "username ILIKE '{value}'"
+      pattern: "username = '{value}'"
       help: "Filter by username"
     command_contains:
       pattern: "\"Command\" ILIKE '%{value}%'"
-      help: "Filter for commands"
+      help: "Filter for command content"
 
 suspicious_command_flags:
   description: "Detect process creation events with commands containing /transfer, /priority, or /download flags."
-  base: "SELECT * FROM events"
+  base: "{process}"
   required_fields:
-    - "(logsourcename(logsourceid) ILIKE 'Microsoft%')"
-    - "qidEventId = '4688'"
-    - "(\"Command\" ILIKE '/transfer' or \"Command\" ILIKE '/priority' or \"Command\" ILIKE '/download')"
-  time_range: "LAST 5 DAYS"
+    - "logsourcename(logsourceid) ILIKE 'Microsoft%'"
+    - "eventid = '4688'"
+    - "(\"Command\" ILIKE '%/transfer%' or \"Command\" ILIKE '%/priority%' or \"Command\" ILIKE '%/download%')"
   optional_fields:
     source_ip:
       pattern: "sourceip = '{value}'"
-      help: "Filter by source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
     username:
-      pattern: "username ILIKE '{value}'"
+      pattern: "username = '{value}'"
       help: "Filter by username"
     command_contains:
       pattern: "\"Command\" ILIKE '%{value}%'"
-      help: "Filter for commands"
+      help: "Filter for command content"
 
+# TODO
 dns_txt_base64_payloads:
-  description: "Detect Suspicious DNS requests."
-  base: "SELECT * FROM events"
+  description: "Detect suspicious DNS requests."
+  base: "{dns}"
   required_fields:
-    - "logsourcetypename(devicetype) ILIKE '%Forti'"
+    - "logsourcetypename(devicetype) ILIKE '%Forti%'"
   optional_fields:
     url_domain:
-      pattern: "url domain= '{value}'"
-      help: "A url domain to iterate search"
+      pattern: "\"URL Domain\" ILIKE '%{value}%'"
+      help: "URL domain to filter on"
     source_ip:
       pattern: "sourceip = '{value}'"
-      help: "Filter by source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
     destination_ip:
       pattern: "destinationip = '{value}'"
-      help: "Filter by destination IP address"
+      help: "Filter by destinationip"
       validation: "ip"
-

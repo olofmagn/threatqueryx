@@ -65,7 +65,7 @@ def validate(value: str, val_type: Optional[str]) -> Tuple[bool, str]:
 
 
 def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: Optional[str]) -> Tuple[
-    str, Optional[Dict[str, Any]]]:
+    str, Optional[Dict[str, Any]], Optional[Dict[str, str]]]:
     """
     Resolves platform and templates given the mode and platform
 
@@ -74,7 +74,7 @@ def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: Option
         platform (Optional[str]): The platform to use, e.g., 'qradar', 'elastic' or 'defender'
 
     Returns:
-        Tuple[str, Optional[Dict[str, Any]]]: The platform name and templates (if CLI mode)
+        Tuple[str, Optional[Dict[str, Any]], Optional[Dict[str, str]]]: The platform name, templates, and base_queries
     """
 
     if mode == "cli":
@@ -92,17 +92,19 @@ def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: Option
         ).ask()
 
         if platform in ("quit", None):
-            return "quit", None  # Let main.py handle the exit
+            return "quit", None, None  # Let main.py handle the exit
 
         try:
-            templates = load_templates(platform)
-            return platform, templates
+            config = load_templates(platform)
+            base_queries = config.get('base_queries', {})
+            templates = {k: v for k, v in config.items() if k != 'base_queries'}
+            return platform, templates, base_queries
         except Exception as e:
             print(f"Error: {e}")
             sys.exit(1)
     else:
         platform = platform or "qradar"
-        return platform, None
+        return platform, None, None
 
 
 def choose_mode() -> Optional[str]:

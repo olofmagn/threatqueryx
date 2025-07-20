@@ -1,4 +1,4 @@
-failed_logins: # clear stored refs
+failed_logins:
   description: "Search for authentication failures with optional filters."
   base: "event.category: 'authentication'"
   required_fields:
@@ -6,10 +6,10 @@ failed_logins: # clear stored refs
   optional_fields:
     user.name:
       pattern: "user.name: '{value}'"
-      help: "The username to filter on (e.g., admin)"
+      help: "Filter by username"
     source.ip:
       pattern: "source.ip: '{value}'"
-      help: "Source IP address of the login attempt"
+      help: "Filter by sourceip"
       validation: "ip"
 
 firewall_block:
@@ -18,43 +18,45 @@ firewall_block:
   required_fields:
     - "fortinet.firewall.action: 'blocked'"
   optional_fields:
-    network.transport:
+    network.protocol:
       pattern: "network.protocol: '{value}'"
-      help: "Network protocol e.g. (https)"
+      help: "Filter by network protocol"
     destination.port:
       pattern: "destination.port: '{value}'"
-      help: "Destination port number"
+      help: "Filter by destinationport"
       validation: "integer"
 
 dns_domains:
-  description: "Look for suspicious dns domains in threat feed or fast lookup"
+  description: "Look for suspicious DNS domains in threat feed or fast lookup."
   base: "event.category: 'network'"
   required_fields:
     - "network.protocol: 'dns'"
   optional_fields:
     url.domain:
       pattern: "url.domain: '{value}'"
+      help: "Filter by domain name"
     source.ip:
       pattern: "source.ip: '{value}'"
-      help: "Source IP of suspicious DNS queries"
+      help: "Filter by sourceip"
       validation: "ip"
 
 rce_attempts:
   description: "Detect potential remote command execution attempts in logs."
-  base: "event.category: 'file'"
+  base: "event.category: 'process'"
   required_fields:
-    - "(process.command_line: 'Invoke-WebRequest' or process.command_line: 'IEX' or process.command_line: 'curl' or process.command_line: 'wget' or process.command_line: 'base64')"
+    - "(process.command_line: '*Invoke-WebRequest*' or process.command_line: '*IEX*' or process.command_line: '*curl*' or process.command_line: '*wget*' or process.command_line: '*base64*')"
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
-      help: "Source IP address of the exploit attempt"
+      help: "Filter by sourceip"
       validation: "ip"
     destination.ip:
       pattern: "destination.ip: '{value}'"
-      help: "Destination IP of the exploit attempt"
+      help: "Filter by destinationip"
+      validation: "ip"
     process.executable:
       pattern: "process.executable: '{value}'"
-      help: "Process executable of the exploit attempt"
+      help: "Filter by process executable"
 
 powershell_execution:
   description: "Find suspicious PowerShell execution events."
@@ -64,26 +66,27 @@ powershell_execution:
   optional_fields:
     user.name:
       pattern: "user.name: '{value}'"
-      help: "Username running PowerShell"
+      help: "Filter by username"
     message:
-      pattern: "message: '{value}'"
-      help: "Message to filter on"
+      pattern: "message: '*{value}*'"
+      help: "Filter by message content"
 
 rdp_loopback_traffic:
   description: "Detect RDP (port 3389) traffic involving loopback addresses (127.0.0.0/8) using event code 5156."
   base: "event.category: 'network'"
   required_fields:
-    - "event.id: '5156'"
-    - "(source.port: '3389' or destination.port: '3389')"
+    - "event.code: '5156'"
+    - "(source.port: 3389 or destination.port: 3389)"
     - "(source.ip: '127.0.0.0/8' or destination.ip: '127.0.0.0/8')"
-  source.ip:
-    pattern: "source.ip: '{value}'"
-    help: "Filter for a specific source IP address"
-    validation: "ip"
-  destination.ip:
-  pattern: "destination.ip: '{value}'"
-  help: "Filter for a specific destination IP address"
-  validation: "ip"
+  optional_fields:
+    source.ip:
+      pattern: "source.ip: '{value}'"
+      help: "Filter by sourceip"
+      validation: "ip"
+    destination.ip:
+      pattern: "destination.ip: '{value}'"
+      help: "Filter by destinationip"
+      validation: "ip"
 
 builtin_account_enabled:
   description: "Detect when built-in accounts like Guest, DefaultAccount, or Administrator are enabled using event code 4722."
@@ -94,37 +97,37 @@ builtin_account_enabled:
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
-      help: "Filter by source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
 
 service_task_creation_commands:
   description: "Detect process creation events involving commands for service creation or scheduled tasks."
   base: "event.category: 'process'"
   required_fields:
-    - "event.id: 4688"
-    - '(process.command_line: *create* or process.command_line: */SC* or process.command_line: */TN*)'
+    - 'event.code: "4688"'
+    - "(process.command_line: '*create*' or process.command_line: '*/SC*' or process.command_line: '*/TN*')"
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
-      help: "Filter by source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
     user.name:
       pattern: "user.name: '{value}'"
       help: "Filter by username"
     process.command_line:
-      pattern: "process.command_line: '{value}'"
-      help: "Filter for commands containing specific strings"
+      pattern: "process.command_line: '*{value}*'"
+      help: "Filter by command line content"
 
 suspicious_command_flags:
   description: "Detect process creation events with commands containing /transfer, /priority, or /download flags using event code 4688."
   base: "event.category: 'process'"
   required_fields:
-    - "event.id: '4688'"
-    - "(process.command_line: */transfer or process.command_line: */priority or process.command_line: */download)"
+    - 'event.code: "4688"'
+    - "(process.command_line: '*/transfer*' or process.command_line: '*/priority*' or process.command_line: '*/download*')"
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
-      help: "Filter by source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
     user.name:
       pattern: "user.name: '{value}'"
@@ -139,13 +142,12 @@ dns_txt_base64_payloads:
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
-      help: "Filter by source IP address"
+      help: "Filter by sourceip"
       validation: "ip"
     destination.ip:
       pattern: "destination.ip: '{value}'"
-      help: "Filter by destination IP address"
+      help: "Filter by destinationip"
       validation: "ip"
     dns.question.type:
       pattern: "dns.question.type: '{value}'"
-      help: "Filter by DNS request type"
-
+      help: "Filter by DNS query type"

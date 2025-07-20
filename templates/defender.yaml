@@ -1,55 +1,40 @@
 failed_logins:
   description: "Identify failed sign-in attempts in Defender logs."
   base: "IdentityLogonEvents"
-  required_fields: 
+  required_fields:
     - "LogonType == 'Interactive' and ActionType == 'LogonFailed'"
   optional_fields:
     username:
       pattern: "AccountName == '{value}'"
-      help: "Username that failed to sign in"
+      help: "Filter by username"
     source_ip:
       pattern: "IPAddress == '{value}'"
-      help: "Source IP address of the logon attempt"
+      help: "Filter by sourceip"
       validation: "ip"
-  post_pipeline: "summarize count() by AccountName, DeviceName, IPAddress, Timestamp"
+  post_pipeline: "project AccountName, DeviceName, IPAddress, Timestamp"
 
 phishing_site:
-  description: "Identify dns lookups to potential phishing domains"
+  description: "Identify network connections to potential phishing domains"
   base: "DeviceNetworkEvents"
   required_fields:
-    - "ActionType has_any('ConnectionBlocked', 'ConnectionAllowed')"
+    - "ActionType == 'ConnectionSuccess'"
   optional_fields:
-    url_domain:
-      pattern: "RemoteUrl contains '.{value}'"
-      help: "The domain the request is initiated towards"
-  post_pipeline: "summarise count() by InitiatingProcessAccountUpn, DeviceName, RemoteUrl, Timestamp, DeviceId, ReportId"
-
-firewall_block:
-  description: "Detect blocked inbound connections on endpoints."
-  base: "DeviceNetworkEvents"
-  required_fields:
-    - "ActionType == 'ConnectionBlocked'"
-  optional_fields:
-    protocol:
-      pattern: "Protocol == '{value}'"
-      help: "Network protocol (e.g., TCP, UDP)"
-    port:
-      pattern: "RemotePort == '{value}'"
-      help: "Blocked destination port"
-      validation: "integer"
-  post_pipeline: "summarise count() by InitiatingProcessAccountUpn, DeviceName, RemoteUrl, Timestamp, DeviceId, ReportId"
+    url:
+      pattern: "RemoteUrl contains '{value}'"
+      help: "Filter by remote URL"
+  post_pipeline: "project InitiatingProcessAccountUpn, DeviceName, RemoteUrl, Timestamp, DeviceId"
 
 dns_exfiltration:
   description: "Look for long suspicious DNS queries that may indicate exfiltration."
   base: "DeviceNetworkEvents"
   required_fields:
-    - "ActionType has_any('ConnectionBlocked', 'ConnectionAllowed')"
+    - "ActionType == 'ConnectionSuccess'"
+    - "strlen(RemoteUrl) > 100"
   optional_fields:
-    source_ip:
-      pattern: "RemoteUrl == '{value}'"
-      help: "Source IP making the DNS request"
-      validation: "ip"
-  post_pipeline: "summarise count() by InitiatingProcessAccountUpn, DeviceName, RemoteUrl, Timestamp, DeviceId, ReportId"
+    url:
+      pattern: "RemoteUrl contains '{value}'"
+      help: "Filter by remote URL"
+  post_pipeline: "project DeviceName, RemoteUrl, Timestamp, InitiatingProcessAccountUpn"
 
 rce_attempts:
   description: "Search for suspicious remote command execution patterns."
@@ -58,23 +43,7 @@ rce_attempts:
     - "FileName has_any('powershell.exe', 'cmd.exe', 'wscript.exe', 'cscript.exe')"
     - "ProcessCommandLine has_any('Invoke-WebRequest', 'IEX', 'curl', 'wget', 'base64')"
   optional_fields:
-    source_ip:
-      pattern: "RemoteIP == '{value}'"
-      help: "Initiator IP of suspected RCE"
-      validation: "ip"
-  post_pipeline: "summarize count() by AccountName, DeviceName, FileName, RemoteIP, Timestamp"
-
-powershell_execution:
-  description: "Hunt for unusual PowerShell usage on endpoints."
-  base: "DeviceProcessEvents"
-  required_fields:
-    - "FileName == 'powershell.exe'"
-  optional_fields:
     username:
       pattern: "AccountName == '{value}'"
-      help: "Username who launched PowerShell"
-    command_line:
-      pattern: "ProcessCommandLine has '{value}'"
-      help: "Part of command line used"
-  post_pipeline: "summarize count() by AccountName, DeviceName, Timestamp"
-
+      help: "Filter by username"
+  post_pipeline: "project AccountName, DeviceName, FileName, ProcessCommandLine, Timestamp"
