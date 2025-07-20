@@ -113,49 +113,27 @@ python3 -m src.main
 ```
 
 ```bash
-  _   _                    _                                   
+  _   _                    _
  | |_| |__  _ __ ___  __ _| |_ __ _ _   _  ___ _ __ _   ___  __
  | __| '_ \| '__/ _ \/ _` | __/ _` | | | |/ _ \ '__| | | \ \/ /
- | |_| | | | | |  __/ (_| | || (_| | |_| |  __/ |  | |_| |>  < 
+ | |_| | | | | |  __/ (_| | || (_| | |_| |  __/ |  | |_| |>  <
   \__|_| |_|_|  \___|\__,_|\__\__, |\__,_|\___|_|   \__, /_/\_\
-                                 |_|                |___/      
+                                 |_|                |___/
 
 Welcome to the application! 
 Enjoy using the app, and feel free to share any feature requests or feedback!
 Version 1.0.0 olofmagn
 
-? Choose interface mode: (Use arrow keys)
- » CLI (terminal)
-   GUI (graphical)
-   Quit
-
-? Choose a platform to use: (Use arrow keys)
-   defender - Microsoft Defender for Endpoint
-   elastic - Elastic SIEM
- » qradar - IBM QRadar
-   Quit
-
-Choose a template to use: (Use arrow keys)
- » failed_logins - Search for authentication failures with optional filters.
-   firewall_block - Detect firewall blocks by protocol and port.
-   rce_attempts - Detect potential remote command execution attempts in logs.
-   powershell_execution - Find suspicious PowerShell execution events.
-   rdp_loopback_traffic - Detect RDP (port 3389) traffic involving loopback addresses (127.0.0.0/8) using Event ID 5156.
-   builtin_account_enabled - Detect when built-in accounts like Guest, DefaultAccount, or Administrator are enabled.
-
 ? Choose interface mode: CLI (terminal)
 ? Choose a platform to use: qradar - IBM QRadar
-? Choose a template to use: failed_logins - Search for authentication failures with optional filters.
-
-Search for authentication failures with optional filters.
-
-username (The username to filter on (e.g., admin)): admin
-source_ip (sourceip address of the login attempt): 127.0.0.1
+? Choose a template to use: failed_logins - Search for authentication failures w
+ith optional filters.
+username (Filter by username): admin
+source_ip (Filter by sourceip address): 127.0.0.1
 Time range (default '10 MINUTES'): 30 minutes
+Generated query:
 
-Generated Query:
-
-SELECT * FROM events WHERE logsourcename(logsourceid) ILIKE 'Windows%' AND qidname(qid) = 'Authentication Failure' AND username = 'admin' AND sourceip = '127.0.0.1' LAST 30 MINUTES
+SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username FROM events where logsourcename(logsourceid) ILIKE 'Windows%' and qidname(qid) = 'Authentication Failure' and username ILIKE 'admin' and sourceip = '127.0.0.1' ORDER BY devicetime DESC LAST 30 MINUTES
 ```
 
 ##  License

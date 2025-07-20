@@ -22,14 +22,18 @@ from utils.ui_constants import (
     DEFAULT_WINDOW_WIDTH,
     DEFAULT_WINDOW_HEIGHT,
     DEFAULT_OUTPUT_HEIGHT,
+    DEFAULT_PADDING,
+    OUTPUT_FRAME_PADDING,
+    FRAME_SIZE_MINIMUM,
     WINDOW_PADDING,
     WINDOW_TITLE,
-    GRID_STICKY_EAST,
+    GRID_STICKY_EW,
     GRID_STICKY_NSEW,
     GRID_STICKY_E,
     WIDGET_PADDING_X,
     WIDGET_PADDING_Y,
     PLATFORMS,
+    COMBOBOX_WIDTH,
     TIME_RANGES,
     TIME_ENTRY_WIDTH,
     COPYRIGHT_TEXT,
@@ -163,6 +167,7 @@ class QueryGui:
 
         self.frame = ttk.Frame(self.root, padding=WINDOW_PADDING)
         self.frame.pack(fill=tk.BOTH, expand=True)
+        self.frame.rowconfigure(7, weight=1)
 
         # Initialize GUI
         self._create_widgets()
@@ -214,8 +219,12 @@ class QueryGui:
         Create and layout all necessary widgets with consistent styling
         """
 
+        self.frame.columnconfigure(0, weight=0, minsize=FRAME_SIZE_MINIMUM)  # Labels column
+        self.frame.columnconfigure(1, weight=1)  # Controls column
+
         # === Platform Selector ===
-        ttk.Label(self.frame, text="Platform:").grid(row=0, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+        ttk.Label(self.frame, text="Platform:").grid(row=0, column=0, sticky=GRID_STICKY_E,
+                                                     padx=(WIDGET_PADDING_X, DEFAULT_PADDING),
                                                      pady=WIDGET_PADDING_Y)
         self.platform_var = tk.StringVar(value=self.platform)
 
@@ -223,31 +232,35 @@ class QueryGui:
             self.frame,
             textvariable=self.platform_var,
             values=[p for p in self.platforms],
-            state="readonly"
+            state="readonly",
+            width=COMBOBOX_WIDTH
+
         )
 
         self.platform_menu.grid(row=0, column=1, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
         self.platform_menu.bind("<<ComboboxSelected>>", self._on_platform_change)
 
         # === Template Selector ===
-        ttk.Label(self.frame, text="Template:").grid(row=1, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+        ttk.Label(self.frame, text="Template:").grid(row=1, column=0, sticky=GRID_STICKY_E,
+                                                     padx=(WIDGET_PADDING_X, DEFAULT_PADDING),
                                                      pady=WIDGET_PADDING_Y)
         self.template_var = tk.StringVar()
-        self.autocomplete_entry = ttk.Combobox(self.frame, textvariable=self.template_var)
+        self.autocomplete_entry = ttk.Combobox(self.frame, textvariable=self.template_var, width=COMBOBOX_WIDTH)
         self.autocomplete_entry.grid(row=1, column=1, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
                                      pady=WIDGET_PADDING_Y)
         self.autocomplete_entry.bind("<<ComboboxSelected>>", self._render_fields)
         self._setup_template_autocomplete()
 
         # === Parameters Frame ===
-        self.inputs_frame = ttk.LabelFrame(self.frame, text="Parameters")
+        self.inputs_frame = ttk.LabelFrame(self.frame, text="Parameters", padding=DEFAULT_PADDING)
 
         # Init empty lists for field tracking
         self.param_rows = []
         self.fields = {}
 
         # === Time Range ===
-        ttk.Label(self.frame, text="Time Range:").grid(row=4, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+        ttk.Label(self.frame, text="Time Range:").grid(row=4, column=0, sticky=GRID_STICKY_E,
+                                                       padx=(WIDGET_PADDING_X, DEFAULT_PADDING),
                                                        pady=WIDGET_PADDING_Y)
 
         time_frame = ttk.Frame(self.frame)
@@ -259,11 +272,11 @@ class QueryGui:
 
         self.btn_time_prev = ttk.Button(time_frame, text="❮", style="Arrow.TButton", padding=ARROW_BUTTON_PADDING,
                                         width=ARROW_BUTTON_WIDTH, command=lambda: self._change_time_range(-1))
-        self.btn_time_prev.pack(side="left", padx=WIDGET_PADDING_X)
+        self.btn_time_prev.pack(side="left", padx=(5, 2))
 
         self.btn_time_next = ttk.Button(time_frame, text="❯", style="Arrow.TButton", padding=ARROW_BUTTON_PADDING,
                                         width=ARROW_BUTTON_WIDTH, command=lambda: self._change_time_range(1))
-        self.btn_time_next.pack(side="left", padx=WIDGET_PADDING_X)
+        self.btn_time_next.pack(side="left", padx=(2, 0))
 
         # Defender button for post_pipeline
         self.include_post_pipeline_var = tk.BooleanVar(value=False)
@@ -275,22 +288,30 @@ class QueryGui:
         )
 
         # === Generate Button ===
-        btn = ttk.Button(self.frame, text="Generate Query", command=self._generate)
-        btn.grid(row=6, column=0, columnspan=2, pady=10, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X)
+        btn_frame = ttk.Frame(self.frame)
+        btn_frame.grid(row=6, column=0, columnspan=2, pady=15, sticky=GRID_STICKY_EW)
+        btn_frame.columnconfigure(0, weight=1)
+
+        btn = ttk.Button(btn_frame, text="Generate Query", command=self._generate)
+        btn.grid(row=0, column=0, sticky="")
 
         # === Output Text Box ===
-        self.output_text = ScrolledText(self.frame, height=self.OUTPUT_HEIGHT, wrap=tk.WORD)
-        self.output_text.grid(row=7, column=0, columnspan=2, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y,
-                              sticky=GRID_STICKY_NSEW)
+        output_frame = ttk.LabelFrame(self.frame, text="Generated Query", padding=OUTPUT_FRAME_PADDING)
+        output_frame.grid(row=7, column=0, columnspan=2, sticky=GRID_STICKY_NSEW)
+        output_frame.columnconfigure(0, weight=1)
+        output_frame.rowconfigure(0, weight=1)
+
+        self.output_text = ScrolledText(output_frame, height=self.OUTPUT_HEIGHT, wrap=tk.WORD)
+        self.output_text.grid(row=0, column=0, sticky=GRID_STICKY_NSEW)
 
         # === Copy Button ===
         copy_btn = ttk.Button(self.frame, text="Copy to Clipboard", command=self._copy)
-        copy_btn.grid(row=8, column=0, columnspan=2, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X,
+        copy_btn.grid(row=8, column=0, columnspan=2, sticky="",
                       pady=WIDGET_PADDING_Y)
 
         # === Separator ===
         separator = ttk.Separator(self.frame, orient="horizontal")
-        separator.grid(row=9, column=0, columnspan=2, sticky=GRID_STICKY_NSEW, pady=(10, 5))
+        separator.grid(row=9, column=0, columnspan=2, sticky=GRID_STICKY_NSEW, pady=(DEFAULT_PADDING, 5))
 
         # === Info Label ===
         self.platform_info_label = ttk.Label(self.frame, text="")
@@ -303,7 +324,8 @@ class QueryGui:
             self.frame, text=COPYRIGHT_TEXT, font=COPYRIGHT_FONT, foreground=COPYRIGHT_COLOR
         )
 
-        self.copyright_label.grid(row=12, column=2, sticky=GRID_STICKY_E, pady=(0, 10), padx=WIDGET_PADDING_X)
+        self.copyright_label.grid(row=12, column=2, sticky=GRID_STICKY_E, pady=(0, DEFAULT_PADDING),
+                                  padx=WIDGET_PADDING_X)
 
         # === Load templates initially ===
         self.load_templates_for_platform(self.platform)
@@ -382,7 +404,7 @@ class QueryGui:
                 return "break"
 
             self.listbox = tk.Listbox(self.frame, height=min(5, len(matches)))
-            self.listbox.grid(row=2, column=1, sticky=GRID_STICKY_EAST, pady=WIDGET_PADDING_Y, padx=WIDGET_PADDING_X)
+            self.listbox.grid(row=2, column=1, sticky=GRID_STICKY_EW, pady=WIDGET_PADDING_Y, padx=WIDGET_PADDING_X)
 
             for match in matches:
                 self.listbox.insert(tk.END, match)
@@ -509,6 +531,9 @@ class QueryGui:
         else:
             self.inputs_frame.grid_remove()
 
+        self.inputs_frame.columnconfigure(0, weight=0, minsize=120)
+        self.inputs_frame.columnconfigure(1, weight=1)
+
         for i, (field, meta) in enumerate(optional_fields.items()):
             label_text = field
             help_text = ""
@@ -524,8 +549,8 @@ class QueryGui:
             entry_var = tk.StringVar()
             entry = ttk.Entry(self.inputs_frame, textvariable=entry_var)
 
-            label.grid(row=i, column=0, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
-            entry.grid(row=i, column=1, sticky=GRID_STICKY_NSEW, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
+            label.grid(row=i, column=0, sticky=GRID_STICKY_E, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
+            entry.grid(row=i, column=1, sticky=GRID_STICKY_EW, padx=WIDGET_PADDING_X, pady=WIDGET_PADDING_Y)
 
             self.param_rows.append((label, entry, entry_var))
 
