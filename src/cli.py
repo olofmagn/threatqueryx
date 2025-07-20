@@ -100,10 +100,10 @@ class QueryCli:
                 inputs[key] = value
                 break
 
-        # Post-pipeline summarization
+        # Apply field selection
         if self.platform == "defender":
             while True:
-                choice = input("Include summarization (post_pipeline)? [y/n]: ").strip().lower()
+                choice = input("Include field selection (post_pipeline)? [y/n]: ").strip().lower()
                 if choice in ("y", "n"):
                     self.include_post_pipeline = (choice == "y")
                     break
