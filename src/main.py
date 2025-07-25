@@ -12,7 +12,6 @@ Main runner
 
 VERSION = "1.0.0"
 
-
 BANNER = rf"""
   _   _                    _
  | |_| |__  _ __ ___  __ _| |_ __ _ _   _  ___ _ __ _   ___  __
@@ -33,8 +32,8 @@ def main():
     mode = choose_mode()
     platform = None
 
-    # Early exit for quit/cancel
-    if mode in ("quit", None):
+    if mode is None or mode.lower() == "quit":
+        print("Goodbye")
         sys.exit(1)
 
     platform, templates, base_queries = resolve_platform_and_templates(mode, platform)
