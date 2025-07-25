@@ -1,7 +1,3 @@
-"""
-GUI Interface
-"""
-
 import re
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -39,6 +35,9 @@ from utils.ui_constants import (
     ARROW_BUTTON_PADDING,
 )
 
+"""
+GUI INTERFACE
+"""
 
 # =============================================================================
 # UI STATE MANAGEMENT METHODS

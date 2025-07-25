@@ -1,11 +1,8 @@
-"""
-Cli interface
-"""
-
 import sys
+import questionary 
+
 from typing import Dict, Tuple, Any
 
-import questionary
 from questionary import Separator
 
 from utils.configuration import (
@@ -13,8 +10,12 @@ from utils.configuration import (
     resolve_platform_and_templates,
     validate,
 )
+
 from utils.generate_queries import build_query
 
+"""
+Cli interface
+"""
 
 class QueryCli:
     def __init__(

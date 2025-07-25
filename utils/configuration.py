@@ -1,7 +1,3 @@
-"""
-Configuration functions
-"""
-
 import ipaddress
 import os
 import re
@@ -13,6 +9,9 @@ import yaml
 
 from utils.ui_constants import DEFAULT_ENCODING, VALID_PLATFORMS
 
+"""
+Configuration utility
+"""
 
 def load_templates(platform: str) -> Dict[str, Any]:
     """

@@ -1,9 +1,3 @@
-"""
-Main runner
-"""
-
-VERSION = "1.0.0"
-
 import tkinter as tk
 import sys
 
@@ -11,6 +5,13 @@ from utils.configuration import resolve_platform_and_templates, choose_mode
 
 from .cli import QueryCli
 from .gui import QueryGui
+
+"""
+Main runner
+"""
+
+VERSION = "1.0.0"
+
 
 BANNER = rf"""
   _   _                    _

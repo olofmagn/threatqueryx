@@ -1,9 +1,8 @@
+from typing import Dict, Any
+
 """
 Query builder
 """
-
-from typing import Dict, Any
-
 
 def build_query(
     template: Dict[str, Any],
