@@ -25,6 +25,10 @@ def load_templates(platform: str) -> Dict[str, Any]:
     - Dict[str, Any]: Parsed YAML template as a dictionary
     """
 
+    if platform.lower() == "quit":
+        print("Goodbye")
+        sys.exit(1)
+
     file_path = os.path.join("templates", f"{platform.lower()}.yaml")
     try:
         with open(file_path, "r", encoding=DEFAULT_ENCODING) as f:
@@ -68,7 +72,7 @@ def validate(value: str, val_type: Optional[str]) -> Tuple[bool, str]:
 
 
 def resolve_platform_and_templates(
-        mode: Literal["cli", "gui"], platform: Optional[str]
+    mode: Literal["cli", "gui"], platform: Optional[str]
 ) -> Tuple[str, Optional[Dict[str, Any]], Optional[Dict[str, str]]]:
     """
     Resolves platform and templates given the mode and platform
@@ -83,19 +87,19 @@ def resolve_platform_and_templates(
 
     if mode == "cli":
         choices = [
-                      questionary.Choice(
-                          title=f"{name} - {meta.get('description', 'no description')}",
-                          value=name,
-                      )
-                      for name, meta in VALID_PLATFORMS.items()
-                  ] + [questionary.Choice("Quit", value="quit")]
+            questionary.Choice(
+                title=f"{name} - {meta.get('description', 'no description')}",
+                value=name,
+            )
+            for name, meta in VALID_PLATFORMS.items()
+        ] + [questionary.Choice("Quit", value="quit")]
 
         platform = questionary.select(
             "Choose a platform to use:", choices=choices
         ).ask()
 
-        if platform in ("quit", None):
-            return "quit", None, None  # Let main.py handle the exit
+        if platform in ("Quit", None):
+            return "Quit", None, None  # Let main.py handle the exit
 
         try:
             config = load_templates(platform)
