@@ -11,10 +11,7 @@ from typing import Dict, Any, Literal, Tuple, Optional
 import questionary
 import yaml
 
-from utils.ui_constants import (
-    DEFAULT_ENCODING,
-    VALID_PLATFORMS
-)
+from utils.ui_constants import DEFAULT_ENCODING, VALID_PLATFORMS
 
 
 def load_templates(platform: str) -> Dict[str, Any]:
@@ -64,8 +61,9 @@ def validate(value: str, val_type: Optional[str]) -> Tuple[bool, str]:
     return True, ""
 
 
-def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: Optional[str]) -> Tuple[
-    str, Optional[Dict[str, Any]], Optional[Dict[str, str]]]:
+def resolve_platform_and_templates(
+    mode: Literal["cli", "gui"], platform: Optional[str]
+) -> Tuple[str, Optional[Dict[str, Any]], Optional[Dict[str, str]]]:
     """
     Resolves platform and templates given the mode and platform
 
@@ -79,16 +77,15 @@ def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: Option
 
     if mode == "cli":
         choices = [
-                      questionary.Choice(
-                          title=f"{name} - {meta.get('description', 'no description')}",
-                          value=name
-                      )
-                      for name, meta in VALID_PLATFORMS.items()
-                  ] + [questionary.Choice("Quit", value="quit")]
+            questionary.Choice(
+                title=f"{name} - {meta.get('description', 'no description')}",
+                value=name,
+            )
+            for name, meta in VALID_PLATFORMS.items()
+        ] + [questionary.Choice("Quit", value="quit")]
 
         platform = questionary.select(
-            "Choose a platform to use:",
-            choices=choices
+            "Choose a platform to use:", choices=choices
         ).ask()
 
         if platform in ("quit", None):
@@ -96,8 +93,8 @@ def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: Option
 
         try:
             config = load_templates(platform)
-            base_queries = config.get('base_queries', {})
-            templates = {k: v for k, v in config.items() if k != 'base_queries'}
+            base_queries = config.get("base_queries", {})
+            templates = {k: v for k, v in config.items() if k != "base_queries"}
             return platform, templates, base_queries
         except Exception as e:
             print(f"Error: {e}")
@@ -120,8 +117,8 @@ def choose_mode() -> Optional[str]:
         choices=[
             questionary.Choice("CLI (terminal)", value="cli"),
             questionary.Choice("GUI (graphical)", value="gui"),
-            questionary.Choice("Quit", value="quit")
-        ]
+            questionary.Choice("Quit", value="quit"),
+        ],
     ).ask()
 
     return mode  # Let main.py handle quit logic
@@ -140,7 +137,9 @@ def normalize_lookback(lookback: str, platform: str) -> Optional[str]:
     """
 
     lookback = lookback.strip().lower()
-    match = re.match(r"(\d+)\s*(minutes?|hours?|days?|min|m|h|d)", lookback, re.IGNORECASE)
+    match = re.match(
+        r"(\d+)\s*(minutes?|hours?|days?|min|m|h|d)", lookback, re.IGNORECASE
+    )
 
     if not match:
         return None

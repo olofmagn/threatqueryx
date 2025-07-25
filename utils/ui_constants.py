@@ -40,7 +40,7 @@ ARROW_BUTTON_PADDING = (6, 0)
 VALID_PLATFORMS = {
     "defender": {"description": "Microsoft Defender for Endpoint"},
     "elastic": {"description": "Elastic SIEM"},
-    "qradar": {"description": "IBM QRadar"}
+    "qradar": {"description": "IBM QRadar"},
 }
 
 # Time Range Configuration
@@ -51,5 +51,5 @@ TIME_RANGES = [
     ("1h", "1 HOUR"),
     ("3h", "3 HOURS"),
     ("12h", "12 HOURS"),
-    ("1d", "1 DAY")
+    ("1d", "1 DAY"),
 ]
