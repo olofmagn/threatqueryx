@@ -64,7 +64,7 @@ def build_query(
                 query += f"\n | where {condition}"
             if include_post_pipeline and "post_pipeline" in template:
                 query += f"\n | {template['post_pipeline']}"
-                query += f"\n | order by Timestamp desc"
+            query += "\n | order by Timestamp desc"
         case "elastic":
             condition_string = " and ".join(conditions) if conditions else "*"
             query = f"{base} and {condition_string} and @timestamp >= now-{duration}"
