@@ -71,6 +71,7 @@ class QueryCli:
             ).ask()
 
             if template_name in ("quit", None):
+                print("Goodbye")
                 sys.exit(1)
             if template_name == "back":
                 self.platform, self.templates, self.base_queries = (
