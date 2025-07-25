@@ -164,6 +164,6 @@ def normalize_lookback(lookback: str, platform: str) -> Optional[str]:
         case "hour" | "hours" | "h":
             return f"{value}h" if is_defender_or_elastic else f"{value} HOURS"
         case "day" | "days" | "d":
-            return f"{value * 24}h" if is_defender_or_elastic else f"{value} DAYS"
+            return f"{value}d" if is_defender_or_elastic else f"{value} DAYS"
         case _:
             return None
