@@ -611,7 +611,7 @@ class QueryGui:
         self._clear_fields()
 
         template_name = self.current_template
-        if not template_name in self.templates:
+        if template_name not in self.templates:
             messagebox.showerror(
                 "Invalid template", f"Template {template_name} not found"
             )
