@@ -47,3 +47,28 @@ rce_attempts:
       pattern: "AccountName == '{value}'"
       help: "Filter by username"
   post_pipeline: "project AccountName, DeviceName, FileName, ProcessCommandLine, Timestamp"
+
+detect_string_arguments:
+  description: "Look for suspicious string argument in command-line tools"
+  base: "DeviceProcessEvents"
+  required_fields:
+    - "FileName in~ ('Powershell', 'pwsh.exe', 'cmd.exe')"
+  optional_fields:
+    process_command_line:
+      pattern: "ProcessCommandLine has '{value}'"
+      help: "Filter by processcommandline"
+  post_pipeline: "project AccountName, DeviceName, FileName, ProcessCommandLine, Timestamp"
+
+detect_rdp_traffic:
+  description: "Detect RDP-related traffic"
+  base: "DeviceNetworkEvents"
+  required_fields:
+    - "RemotePort == 3389 or LocalPort == 3389"  # Catch both inbound/outbound
+  optional_fields:
+    remote_ip_type:
+      pattern: "RemoteIPType has '{value}'"
+      help: "Filter by remote ip type (Public, Private)"
+    action_type:
+      pattern: "ActionType has '{value}'"
+      help: "Filter by connection action"
+  post_pipeline: "project AccountName, DeviceName, RemoteIP, RemotePort, LocalIP, LocalPort, ActionType, Protocol, Timestamp"
