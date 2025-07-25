@@ -31,10 +31,6 @@ class QueryCli:
         Build query for cli given template, inputs, duration, platform and post_pipeline
         """
 
-        if not self.templates:
-            print("No templates available.")
-            sys.exit(1)
-
         template_name, template = self._get_template()
 
         inputs = self._get_inputs(template)
