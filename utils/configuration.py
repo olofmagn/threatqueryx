@@ -13,6 +13,7 @@ from utils.ui_constants import DEFAULT_ENCODING, VALID_PLATFORMS
 Configuration utility
 """
 
+
 def load_templates(platform: str) -> Dict[str, Any]:
     """
     Loads templates for the specified SIEM platform
@@ -49,19 +50,25 @@ def validate(value: str, val_type: Optional[str]) -> Tuple[bool, str]:
     - Tuple[bool, str]: Whether the value is valid with a result or error message
     """
 
-    if val_type == "ip":
-        try:
-            ipaddress.ip_address(value)
+    match val_type:
+        case "ip":
+            try:
+                ipaddress.ip_address(value)
+                return True, ""
+            except ValueError:
+                return False, "Invalid IP Address"
+        case "integer":
+            try:
+                int(value)
+                return True, ""
+            except ValueError:
+                return False, "Must be an integer"
+        case _:
             return True, ""
-        except ValueError:
-            return False, "Invalid IP Address"
-    elif val_type == "integer":
-        return value.isdigit(), "Must be an integer"
-    return True, ""
 
 
 def resolve_platform_and_templates(
-    mode: Literal["cli", "gui"], platform: Optional[str]
+        mode: Literal["cli", "gui"], platform: Optional[str]
 ) -> Tuple[str, Optional[Dict[str, Any]], Optional[Dict[str, str]]]:
     """
     Resolves platform and templates given the mode and platform
@@ -76,12 +83,12 @@ def resolve_platform_and_templates(
 
     if mode == "cli":
         choices = [
-            questionary.Choice(
-                title=f"{name} - {meta.get('description', 'no description')}",
-                value=name,
-            )
-            for name, meta in VALID_PLATFORMS.items()
-        ] + [questionary.Choice("Quit", value="quit")]
+                      questionary.Choice(
+                          title=f"{name} - {meta.get('description', 'no description')}",
+                          value=name,
+                      )
+                      for name, meta in VALID_PLATFORMS.items()
+                  ] + [questionary.Choice("Quit", value="quit")]
 
         platform = questionary.select(
             "Choose a platform to use:", choices=choices
