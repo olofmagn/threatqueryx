@@ -1,9 +1,3 @@
-"""
-Main runner
-"""
-
-VERSION = "1.0.0"
-
 import tkinter as tk
 import sys
 
@@ -11,6 +5,12 @@ from utils.configuration import resolve_platform_and_templates, choose_mode
 
 from .cli import QueryCli
 from .gui import QueryGui
+
+"""
+Main runner
+"""
+
+VERSION = "1.0.0"
 
 BANNER = rf"""
   _   _                    _
@@ -32,8 +32,8 @@ def main():
     mode = choose_mode()
     platform = None
 
-    # Early exit for quit/cancel
-    if mode in ("quit", None):
+    if mode is None or mode.lower() == "quit":
+        print("Goodbye")
         sys.exit(1)
 
     platform, templates, base_queries = resolve_platform_and_templates(mode, platform)

@@ -40,7 +40,7 @@ The tool loads pre-defined YAML templates and allows you to select parameters su
 ```
 
 ## Requirements
-- Python > 3.10.
+- Python >= 3.10.
 - External dependencies as listed in `requirements.txt`.
 
 ## Template Format (YAML)
@@ -59,20 +59,21 @@ base_queries:
 Failed login template:
 ```yaml
 failed_logins:
-  description: "Search for authentication failures with optional filters."
-  base: "{authentication}"
+  description: "Identify failed sign-in attempts in Defender logs."
+  base: "IdentityLogonEvents"
   required_fields:
-    - "logsourcename(logsourceid) ILIKE 'Windows%'"
-    - "qidname(qid) = 'Authentication Failure'"
+    - "LogonType == 'Interactive' and ActionType == 'LogonFailed'"
   optional_fields:
     username:
-      pattern: "username ILIKE '{value}'"
+      pattern: "AccountName has '{value}'"
+      type: str
       help: "Filter by username"
     source_ip:
-      pattern: "sourceip = '{value}'"
-      help: "Filter by sourceip address"
+      pattern: "IPAddress == '{value}'"
+      type: str
+      help: "Filter by sourceip"
       validation: "ip"
-
+  post_pipeline: "project AccountName, DeviceName, IPAddress, Timestamp"
 ```
 
 Each template (e.g., `failed_logins`) defines the structure of a query, where `base` represents the foundational query logic. The `required_fields` specify mandatory parameters necessary to construct an effective query and are typically determined by the implementer during the template design phase. The `optional_fields` section allows the template to support additional user-defined input to customize the search. 
@@ -82,7 +83,7 @@ Each `optional_fields` must include a `pattern` (used for input validation) and 
 Finally, the `validation` block, defines the backend checks to ensure the provided input adheres to expected formats or values. For more practical examples, see the `Usage` section. 
 
 ### Adding New Templates
-To add a new template, simply append a new entry string using the same structure to the appropriate YAML file (e.g., `templates/elastic.yaml`). No code changes are required
+To add a new template, simply append a new entry string using the same structure to the appropriate YAML file (e.g., `templates/elastic.yaml`). No code changes are required.
 
 ##  Pending Features
 - Add integration with a yamlbuilder to automate threat-hunting templates using ML/AI on a local setup.

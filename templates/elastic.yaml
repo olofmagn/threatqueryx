@@ -6,9 +6,11 @@ failed_logins:
   optional_fields:
     user.name:
       pattern: "user.name: '{value}'"
+      type: str
       help: "Filter by username"
     source.ip:
       pattern: "source.ip: '{value}'"
+      type: str
       help: "Filter by sourceip"
       validation: "ip"
 
@@ -20,9 +22,11 @@ firewall_block:
   optional_fields:
     network.protocol:
       pattern: "network.protocol: '{value}'"
+      type: str
       help: "Filter by network protocol"
     destination.port:
       pattern: "destination.port: '{value}'"
+      type: int
       help: "Filter by destinationport"
       validation: "integer"
 
@@ -34,9 +38,11 @@ dns_domains:
   optional_fields:
     url.domain:
       pattern: "url.domain: '{value}'"
+      type: str
       help: "Filter by domain name"
     source.ip:
       pattern: "source.ip: '{value}'"
+      type: str
       help: "Filter by sourceip"
       validation: "ip"
 
@@ -48,14 +54,17 @@ rce_attempts:
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
+      type: str
       help: "Filter by sourceip"
       validation: "ip"
     destination.ip:
       pattern: "destination.ip: '{value}'"
+      type: str
       help: "Filter by destinationip"
       validation: "ip"
     process.executable:
       pattern: "process.executable: '{value}'"
+      type: str
       help: "Filter by process executable"
 
 powershell_execution:
@@ -66,9 +75,11 @@ powershell_execution:
   optional_fields:
     user.name:
       pattern: "user.name: '{value}'"
+      type: str
       help: "Filter by username"
     message:
       pattern: "message: '*{value}*'"
+      type: str
       help: "Filter by message content"
 
 rdp_loopback_traffic:
@@ -77,14 +88,16 @@ rdp_loopback_traffic:
   required_fields:
     - "event.code: '5156'"
     - "(source.port: 3389 or destination.port: 3389)"
-    - "(source.ip: '127.0.0.0/8' or destination.ip: '127.0.0.0/8')"
+    - "(source.ip: 127.0.0.0/8 or destination.ip: 127.0.0.0/8)"
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
+      type: str
       help: "Filter by sourceip"
       validation: "ip"
     destination.ip:
       pattern: "destination.ip: '{value}'"
+      type: str
       help: "Filter by destinationip"
       validation: "ip"
 
@@ -97,6 +110,7 @@ builtin_account_enabled:
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
+      type: str
       help: "Filter by sourceip"
       validation: "ip"
 
@@ -104,33 +118,39 @@ service_task_creation_commands:
   description: "Detect process creation events involving commands for service creation or scheduled tasks."
   base: "event.category: 'process'"
   required_fields:
-    - 'event.code: "4688"'
+    - "event.code: '4688'"
     - "(process.command_line: '*create*' or process.command_line: '*/SC*' or process.command_line: '*/TN*')"
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
+      type: str
       help: "Filter by sourceip"
       validation: "ip"
     user.name:
       pattern: "user.name: '{value}'"
+      type: str
       help: "Filter by username"
     process.command_line:
       pattern: "process.command_line: '*{value}*'"
+      type: str
       help: "Filter by command line content"
+
 
 suspicious_command_flags:
   description: "Detect process creation events with commands containing /transfer, /priority, or /download flags using event code 4688."
   base: "event.category: 'process'"
   required_fields:
-    - 'event.code: "4688"'
+    - "event.code: '4688'"
     - "(process.command_line: '*/transfer*' or process.command_line: '*/priority*' or process.command_line: '*/download*')"
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
+      type: str
       help: "Filter by sourceip"
       validation: "ip"
     user.name:
       pattern: "user.name: '{value}'"
+      type: str
       help: "Filter by username"
 
 dns_txt_base64_payloads:
@@ -142,12 +162,15 @@ dns_txt_base64_payloads:
   optional_fields:
     source.ip:
       pattern: "source.ip: '{value}'"
+      type: str
       help: "Filter by sourceip"
       validation: "ip"
     destination.ip:
       pattern: "destination.ip: '{value}'"
+      type: str
       help: "Filter by destinationip"
       validation: "ip"
     dns.question.type:
       pattern: "dns.question.type: '{value}'"
+      type: str
       help: "Filter by DNS query type"

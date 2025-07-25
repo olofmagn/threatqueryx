@@ -1,7 +1,3 @@
-"""
-Configuration functions
-"""
-
 import ipaddress
 import os
 import re
@@ -11,10 +7,11 @@ from typing import Dict, Any, Literal, Tuple, Optional
 import questionary
 import yaml
 
-from utils.ui_constants import (
-    DEFAULT_ENCODING,
-    VALID_PLATFORMS
-)
+from utils.ui_constants import DEFAULT_ENCODING, VALID_PLATFORMS
+
+"""
+Configuration utility
+"""
 
 
 def load_templates(platform: str) -> Dict[str, Any]:
@@ -27,6 +24,10 @@ def load_templates(platform: str) -> Dict[str, Any]:
     Returns:
     - Dict[str, Any]: Parsed YAML template as a dictionary
     """
+
+    if platform.lower() == "quit":
+        print("Goodbye")
+        sys.exit(1)
 
     file_path = os.path.join("templates", f"{platform.lower()}.yaml")
     try:
@@ -53,19 +54,26 @@ def validate(value: str, val_type: Optional[str]) -> Tuple[bool, str]:
     - Tuple[bool, str]: Whether the value is valid with a result or error message
     """
 
-    if val_type == "ip":
-        try:
-            ipaddress.ip_address(value)
+    match val_type:
+        case "ip":
+            try:
+                ipaddress.ip_address(value)
+                return True, ""
+            except ValueError:
+                return False, "Invalid IP Address"
+        case "integer":
+            try:
+                int(value)
+                return True, ""
+            except ValueError:
+                return False, "Must be an integer"
+        case _:
             return True, ""
-        except ValueError:
-            return False, "Invalid IP Address"
-    elif val_type == "integer":
-        return value.isdigit(), "Must be an integer"
-    return True, ""
 
 
-def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: Optional[str]) -> Tuple[
-    str, Optional[Dict[str, Any]], Optional[Dict[str, str]]]:
+def resolve_platform_and_templates(
+    mode: Literal["cli", "gui"], platform: Optional[str]
+) -> Tuple[str, Optional[Dict[str, Any]], Optional[Dict[str, str]]]:
     """
     Resolves platform and templates given the mode and platform
 
@@ -79,25 +87,24 @@ def resolve_platform_and_templates(mode: Literal["cli", "gui"], platform: Option
 
     if mode == "cli":
         choices = [
-                      questionary.Choice(
-                          title=f"{name} - {meta.get('description', 'no description')}",
-                          value=name
-                      )
-                      for name, meta in VALID_PLATFORMS.items()
-                  ] + [questionary.Choice("Quit", value="quit")]
+            questionary.Choice(
+                title=f"{name} - {meta.get('description', 'no description')}",
+                value=name,
+            )
+            for name, meta in VALID_PLATFORMS.items()
+        ] + [questionary.Choice("Quit", value="quit")]
 
         platform = questionary.select(
-            "Choose a platform to use:",
-            choices=choices
+            "Choose a platform to use:", choices=choices
         ).ask()
 
-        if platform in ("quit", None):
-            return "quit", None, None  # Let main.py handle the exit
+        if platform in ("Quit", None):
+            return "Quit", None, None  # Let main.py handle the exit
 
         try:
             config = load_templates(platform)
-            base_queries = config.get('base_queries', {})
-            templates = {k: v for k, v in config.items() if k != 'base_queries'}
+            base_queries = config.get("base_queries", {})
+            templates = {k: v for k, v in config.items() if k != "base_queries"}
             return platform, templates, base_queries
         except Exception as e:
             print(f"Error: {e}")
@@ -120,8 +127,8 @@ def choose_mode() -> Optional[str]:
         choices=[
             questionary.Choice("CLI (terminal)", value="cli"),
             questionary.Choice("GUI (graphical)", value="gui"),
-            questionary.Choice("Quit", value="quit")
-        ]
+            questionary.Choice("Quit", value="quit"),
+        ],
     ).ask()
 
     return mode  # Let main.py handle quit logic
@@ -140,7 +147,9 @@ def normalize_lookback(lookback: str, platform: str) -> Optional[str]:
     """
 
     lookback = lookback.strip().lower()
-    match = re.match(r"(\d+)\s*(minutes?|hours?|days?|min|m|h|d)", lookback, re.IGNORECASE)
+    match = re.match(
+        r"(\d+)\s*(minutes?|hours?|days?|min|m|h|d)", lookback, re.IGNORECASE
+    )
 
     if not match:
         return None
@@ -159,6 +168,6 @@ def normalize_lookback(lookback: str, platform: str) -> Optional[str]:
         case "hour" | "hours" | "h":
             return f"{value}h" if is_defender_or_elastic else f"{value} HOURS"
         case "day" | "days" | "d":
-            return f"{value * 24}h" if is_defender_or_elastic else f"{value} DAYS"
+            return f"{value}d" if is_defender_or_elastic else f"{value} DAYS"
         case _:
             return None

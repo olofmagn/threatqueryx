@@ -14,9 +14,11 @@ failed_logins:
   optional_fields:
     username:
       pattern: "username ILIKE '{value}'"
+      type: str
       help: "Filter by username"
     source_ip:
       pattern: "sourceip = '{value}'"
+      type: str
       help: "Filter by sourceip address"
       validation: "ip"
 
@@ -28,9 +30,11 @@ firewall_block:
   optional_fields:
     protocol:
       pattern: "PROTOCOLNAME(protocolid) = '{value}'"
+      type: str
       help: "Filter by protocol"
     destination_port:
-      pattern: "destinationport = {value}"
+      pattern: "destinationport = '{value}'"
+      type: int
       help: "Filter by destinationport"
       validation: "integer"
 
@@ -42,10 +46,12 @@ rce_attempts:
   optional_fields:
     source_ip:
       pattern: "sourceip = '{value}'"
+      type: str
       help: "Filter by sourceip address"
       validation: "ip"
     destination_ip:
       pattern: "destinationip = '{value}'"
+      type: str
       help: "Filter by destinationip"
       validation: "ip"
 
@@ -58,12 +64,15 @@ powershell_execution:
   optional_fields:
     username:
       pattern: "username = '{value}'"
+      type: str
       help: "Filter by username"
     process_name:
       pattern: "\"Process Name\" ILIKE '%{value}%'"
+      type: str
       help: "Filter by process name"
     parent_process_name:
       pattern: "\"Parent Process Name\" ILIKE '%{value}%'"
+      type: str
       help: "Filter by parent process name"
 
 rdp_loopback_traffic:
@@ -72,22 +81,26 @@ rdp_loopback_traffic:
   required_fields:
     - "eventid = '5156'"
     - "(sourceport = '3389' or destinationport = '3389')"
-    - "(INCIDR('127.0.0.0/8', sourceip) or INCIDR('127.0.0.0/8', destinationip))"
+    - "(INCIDR(127.0.0.0/8, sourceip) or INCIDR(127.0.0.0/8, destinationip))"
   optional_fields:
     source_ip:
       pattern: "sourceip = '{value}'"
+      type: str
       help: "Filter by sourceip"
       validation: "ip"
     destination_ip:
       pattern: "destinationip = '{value}'"
+      type: str
       help: "Filter by destinationip"
       validation: "ip"
     source_port:
       pattern: "sourceport = {value}"
+      type: int
       help: "Filter by sourceport"
       validation: "integer"
     destination_port:
       pattern: "destinationport = {value}"
+      type: int
       help: "Filter by destinationport"
       validation: "integer"
 
@@ -101,6 +114,7 @@ builtin_account_enabled:
   optional_fields:
     source_ip:
       pattern: "sourceip = '{value}'"
+      type: str
       help: "Filter by sourceip"
       validation: "ip"
 
@@ -114,13 +128,16 @@ service_task_creation_commands:
   optional_fields:
     source_ip:
       pattern: "sourceip = '{value}'"
+      type: str
       help: "Filter by sourceip"
       validation: "ip"
     username:
       pattern: "username = '{value}'"
+      type: str
       help: "Filter by username"
     command_contains:
       pattern: "\"Command\" ILIKE '%{value}%'"
+      type: str
       help: "Filter for command content"
 
 suspicious_command_flags:
@@ -133,13 +150,16 @@ suspicious_command_flags:
   optional_fields:
     source_ip:
       pattern: "sourceip = '{value}'"
+      type: str
       help: "Filter by sourceip"
       validation: "ip"
     username:
       pattern: "username = '{value}'"
+      type: str
       help: "Filter by username"
     command_contains:
       pattern: "\"Command\" ILIKE '%{value}%'"
+      type: str
       help: "Filter for command content"
 
 # TODO
@@ -151,12 +171,15 @@ dns_txt_base64_payloads:
   optional_fields:
     url_domain:
       pattern: "\"URL Domain\" ILIKE '%{value}%'"
+      type: str
       help: "URL domain to filter on"
     source_ip:
       pattern: "sourceip = '{value}'"
+      type: str
       help: "Filter by sourceip"
       validation: "ip"
     destination_ip:
       pattern: "destinationip = '{value}'"
+      type: str
       help: "Filter by destinationip"
       validation: "ip"

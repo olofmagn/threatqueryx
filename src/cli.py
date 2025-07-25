@@ -1,19 +1,26 @@
+import sys
+import questionary 
+
+from typing import Dict, Tuple, Any
+
+from questionary import Separator
+
+from utils.configuration import (
+    normalize_lookback,
+    resolve_platform_and_templates,
+    validate,
+)
+
+from utils.generate_queries import build_query
+
 """
 Cli interface
 """
 
-import sys
-from typing import Dict, Tuple, Any
-
-import questionary
-from questionary import Separator
-
-from utils.configuration import normalize_lookback, resolve_platform_and_templates, validate
-from utils.generate_queries import build_query
-
-
 class QueryCli:
-    def __init__(self, platform: str, templates: Dict[str, Any], base_queries: Dict[str, str]) -> None:
+    def __init__(
+        self, platform: str, templates: Dict[str, Any], base_queries: Dict[str, str]
+    ) -> None:
         self.platform = platform
         self.templates = templates
         self.base_queries = base_queries
@@ -24,16 +31,19 @@ class QueryCli:
         Build query for cli given template, inputs, duration, platform and post_pipeline
         """
 
-        if not self.templates:
-            print("No templates available.")
-            sys.exit(1)
-
         template_name, template = self._get_template()
 
         inputs = self._get_inputs(template)
         duration = self._get_lookback()
 
-        query = build_query(template, inputs, duration, self.platform, self.base_queries, self.include_post_pipeline)
+        query = build_query(
+            template,
+            inputs,
+            duration,
+            self.platform,
+            self.base_queries,
+            self.include_post_pipeline,
+        )
         print("Generated query:\n")
         print(query)
 
@@ -45,28 +55,28 @@ class QueryCli:
 
         while True:
             choices = [
-                          questionary.Choice(
-                              title=f"{name} - {meta.get('description', 'No description')}",
-                              value=name
-                          )
-
-                          for name, meta in self.templates.items()
-                      ] + [
-                          Separator("---"),
-                          questionary.Choice("Go back to platform selection", value="back"),
-                          questionary.Choice("Quit", value="quit")
-                      ]
+                questionary.Choice(
+                    title=f"{name} - {meta.get('description', 'No description')}",
+                    value=name,
+                )
+                for name, meta in self.templates.items()
+            ] + [
+                Separator("---"),
+                questionary.Choice("Go back to platform selection", value="back"),
+                questionary.Choice("Quit", value="quit"),
+            ]
 
             template_name = questionary.select(
-                "Choose a template to use:",
-                choices=choices
+                "Choose a template to use:", choices=choices
             ).ask()
 
             if template_name in ("quit", None):
+                print("Goodbye")
                 sys.exit(1)
             if template_name == "back":
-                self.platform, self.templates, self.base_queries = resolve_platform_and_templates(mode="cli",
-                                                                                                  platform=None)
+                self.platform, self.templates, self.base_queries = (
+                    resolve_platform_and_templates(mode="cli", platform=None)
+                )
                 continue  # Restart template selection loop
 
             template = self.templates[template_name]
@@ -103,9 +113,13 @@ class QueryCli:
         # Apply field selection
         if self.platform == "defender":
             while True:
-                choice = input("Include field selection (post_pipeline)? [y/n]: ").strip().lower()
+                choice = (
+                    input("Include field selection (post_pipeline)? [y/n]: ")
+                    .strip()
+                    .lower()
+                )
                 if choice in ("y", "n"):
-                    self.include_post_pipeline = (choice == "y")
+                    self.include_post_pipeline = choice == "y"
                     break
                 print("Please enter 'y' or 'n'.")
 

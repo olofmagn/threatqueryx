@@ -5,10 +5,12 @@ failed_logins:
     - "LogonType == 'Interactive' and ActionType == 'LogonFailed'"
   optional_fields:
     username:
-      pattern: "AccountName == '{value}'"
+      pattern: "AccountName has '{value}'"
+      type: str
       help: "Filter by username"
     source_ip:
       pattern: "IPAddress == '{value}'"
+      type: str
       help: "Filter by sourceip"
       validation: "ip"
   post_pipeline: "project AccountName, DeviceName, IPAddress, Timestamp"
@@ -21,6 +23,7 @@ phishing_site:
   optional_fields:
     url:
       pattern: "RemoteUrl contains '{value}'"
+      type: str
       help: "Filter by remote URL"
   post_pipeline: "project InitiatingProcessAccountUpn, DeviceName, RemoteUrl, Timestamp, DeviceId"
 
@@ -33,6 +36,7 @@ dns_exfiltration:
   optional_fields:
     url:
       pattern: "RemoteUrl contains '{value}'"
+      type: str
       help: "Filter by remote URL"
   post_pipeline: "project DeviceName, RemoteUrl, Timestamp, InitiatingProcessAccountUpn"
 
@@ -44,6 +48,35 @@ rce_attempts:
     - "ProcessCommandLine has_any('Invoke-WebRequest', 'IEX', 'curl', 'wget', 'base64')"
   optional_fields:
     username:
-      pattern: "AccountName == '{value}'"
+      pattern: "AccountName has '{value}'"
+      type: str
       help: "Filter by username"
   post_pipeline: "project AccountName, DeviceName, FileName, ProcessCommandLine, Timestamp"
+
+detect_string_arguments:
+  description: "Look for suspicious string argument in command-line tools"
+  base: "DeviceProcessEvents"
+  required_fields:
+    - "FileName in~ ('powershell.exe', 'pwsh.exe', 'cmd.exe')"
+  optional_fields:
+    process_command_line:
+      pattern: "ProcessCommandLine has '{value}'"
+      type: str
+      help: "Filter by processcommandline"
+  post_pipeline: "project AccountName, DeviceName, FileName, ProcessCommandLine, Timestamp"
+
+detect_rdp_traffic:
+  description: "Detect RDP-related traffic"
+  base: "DeviceNetworkEvents"
+  required_fields:
+    - "RemotePort == 3389 or LocalPort == 3389"  # Catch both inbound/outbound
+  optional_fields:
+    remote_ip_type:
+      pattern: "RemoteIPType == '{value}'"
+      type: str
+      help: "Filter by remote ip type (Public, Private)"
+    action_type:
+      pattern: "ActionType == '{value}'"
+      type: str
+      help: "Filter by connection action (ConnectionSuccess, ConnectionRequest)"
+  post_pipeline: "project DeviceName, RemoteIP, RemotePort, LocalIP, LocalPort, ActionType, Protocol, Timestamp"
