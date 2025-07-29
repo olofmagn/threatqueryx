@@ -7,76 +7,118 @@ failed_logins:
     username:
       pattern: "AccountName has '{value}'"
       type: str
-      help: "Filter by username"
+      help: "Filter by username (substring match)"
     source_ip:
       pattern: "IPAddress == '{value}'"
       type: str
-      help: "Filter by sourceip"
+      help: "Filter by source IP address"
       validation: "ip"
-  post_pipeline: "project AccountName, DeviceName, IPAddress, Timestamp"
+  post_pipeline: "project AccountName, DeviceName, DeviceId, IPAddress, Timestamp"
 
 phishing_site:
-  description: "Identify network connections to potential phishing domains"
+  description: "Identify network connections to potential phishing domains."
   base: "DeviceNetworkEvents"
   required_fields:
     - "ActionType == 'ConnectionSuccess'"
   optional_fields:
-    url:
+    url_contains:
       pattern: "RemoteUrl contains '{value}'"
       type: str
-      help: "Filter by remote URL"
-  post_pipeline: "project InitiatingProcessAccountUpn, DeviceName, RemoteUrl, Timestamp, DeviceId"
+      help: "Filter by remote URL content (substring match)"
+    username:
+      pattern: "InitiatingProcessAccountUpn has '{value}'"
+      type: str
+      help: "Filter by username (substring match)"
+  post_pipeline: "project InitiatingProcessAccountUpn, DeviceName, DeviceId, RemoteUrl, RemoteIP, Timestamp"
 
 dns_exfiltration:
   description: "Look for long suspicious DNS queries that may indicate exfiltration."
   base: "DeviceNetworkEvents"
   required_fields:
-    - "ActionType == 'ConnectionSuccess'"
-    - "strlen(RemoteUrl) > 100"
+    - "RemotePort == 53"
   optional_fields:
-    url:
-      pattern: "RemoteUrl contains '{value}'"
+    url_length_min:
+      pattern: "strlen(RemoteUrl) > {value}"
+      type: int
+      help: "Filter by minimum URL length"
+      validation: "integer"
+    username:
+      pattern: "InitiatingProcessAccountUpn has '{value}'"
       type: str
-      help: "Filter by remote URL"
-  post_pipeline: "project DeviceName, RemoteUrl, Timestamp, InitiatingProcessAccountUpn"
+      help: "Filter by username (substring match)"
+  post_pipeline: "project InitiatingProcessAccountUpn, DeviceName, DeviceId, RemoteUrl, RemoteIP, Timestamp"
 
 rce_attempts:
   description: "Search for suspicious remote command execution patterns."
   base: "DeviceProcessEvents"
   required_fields:
     - "FileName has_any('powershell.exe', 'cmd.exe', 'wscript.exe', 'cscript.exe')"
-    - "ProcessCommandLine has_any('Invoke-WebRequest', 'IEX', 'curl', 'wget', 'base64')"
+    - "(ProcessCommandLine has_any('Invoke-WebRequest', 'IEX', 'curl', 'wget', 'base64') or ProcessCommandLine contains 'DownloadString')"
   optional_fields:
     username:
       pattern: "AccountName has '{value}'"
       type: str
-      help: "Filter by username"
-  post_pipeline: "project AccountName, DeviceName, FileName, ProcessCommandLine, Timestamp"
+      help: "Filter by username (substring match)"
+    command_contains:
+      pattern: "ProcessCommandLine contains '{value}'"
+      type: str
+      help: "Filter by command line content (substring match)"
+  post_pipeline: "project AccountName, DeviceName, DeviceId, FileName, ProcessCommandLine, Timestamp"
 
 detect_string_arguments:
-  description: "Look for suspicious string argument in command-line tools"
+  description: "Look for suspicious string arguments in command-line tools."
   base: "DeviceProcessEvents"
   required_fields:
-    - "FileName in~ ('powershell.exe', 'pwsh.exe', 'cmd.exe')"
+    - "FileName has_any('powershell.exe', 'pwsh.exe', 'cmd.exe')"
   optional_fields:
-    process_command_line:
-      pattern: "ProcessCommandLine has '{value}'"
+    username:
+      pattern: "AccountName has '{value}'"
       type: str
-      help: "Filter by processcommandline"
-  post_pipeline: "project AccountName, DeviceName, FileName, ProcessCommandLine, Timestamp"
+      help: "Filter by username (substring match)"
+    command_contains:
+      pattern: "ProcessCommandLine contains '{value}'"
+      type: str
+      help: "Filter by command line content (substring match)"
+  post_pipeline: "project AccountName, DeviceName, DeviceId, FileName, ProcessCommandLine, Timestamp"
 
 detect_rdp_traffic:
-  description: "Detect RDP-related traffic"
+  description: "Detect RDP-related network traffic."
   base: "DeviceNetworkEvents"
   required_fields:
-    - "RemotePort == 3389 or LocalPort == 3389"  # Catch both inbound/outbound
+    - "(RemotePort == 3389 or LocalPort == 3389)"
   optional_fields:
     remote_ip_type:
       pattern: "RemoteIPType == '{value}'"
       type: str
-      help: "Filter by remote ip type (Public, Private)"
+      help: "Filter by remote IP type (Public, Private, Loopback)"
     action_type:
       pattern: "ActionType == '{value}'"
       type: str
-      help: "Filter by connection action (ConnectionSuccess, ConnectionRequest)"
-  post_pipeline: "project DeviceName, RemoteIP, RemotePort, LocalIP, LocalPort, ActionType, Protocol, Timestamp"
+      help: "Filter by connection action type"
+    username:
+      pattern: "InitiatingProcessAccountUpn has '{value}'"
+      type: str
+      help: "Filter by username (substring match)"
+  post_pipeline: "project InitiatingProcessAccountUpn, DeviceName, DeviceId, RemoteIP, RemotePort, LocalIP, LocalPort, ActionType, Protocol, Timestamp"
+
+cve_2025_53770:
+  description: "Detects compiled ASPX web shell dropped during exploitation of SharePoint RCE vulnerability CVE-2025-53770."
+  base: "DeviceNetworkEvents"
+  required_fields:
+    - "RemoteUrl has_any('ToolPane.aspx', 'spinstall', 'signout', 'ghostfile')"
+    - "ActionType has_any('ConnectionSuccess', 'HttpConnectionInspected', 'NetworkSignatureExpected')"
+    - "(RemotePort == 80 or RemotePort == 443)"
+  optional_fields:
+    remote_ip_type:
+      pattern: "RemoteIPType == '{value}'"
+      type: str
+      help: "Filter by remote IP type (Public, Private, Loopback)"
+    url_contains:
+      pattern: "RemoteUrl contains '{value}'"
+      type: str
+      help: "Filter by additional URL content (substring match)"
+    username:
+      pattern: "InitiatingProcessAccountUpn has '{value}'"
+      type: str
+      help: "Filter by username (substring match)"
+  post_pipeline: "project InitiatingProcessAccountUpn, DeviceName, DeviceId, RemoteIP, RemotePort, RemoteUrl, ActionType, Protocol, Timestamp"
