@@ -1,6 +1,6 @@
 #  ThreatQueryX - Multi-Platform Threat Hunting Query Builder
 A cross-platform desktop GUI tool that helps security analysts build and customize threat hunting queries for platforms like:
-- AQL (QRadar)
+- IBM QRadar
 - Elasticsearch
 - Microsoft Defender
 
@@ -10,7 +10,7 @@ The tool loads pre-defined YAML templates and allows you to select parameters su
 -  Template-based Query Generation (via YAML files).
 -  Dynamic Field Loading based on platform.
 -  Time Range Selection & Navigation.
--  Platform-specific output (AQL, KQL, Elastic DSL).
+-  Platform-specific output.
 -  Validation of input fields (e.g., IPs, integers).
 
 ## File structure
@@ -59,35 +59,38 @@ base_queries:
 Failed login template:
 ```yaml
 failed_logins:
-  description: "Identify failed sign-in attempts in Defender logs."
-  base: "IdentityLogonEvents"
+  description: "Search for authentication failures with optional filters."
+  base: "{authentication}"
   required_fields:
-    - "LogonType == 'Interactive' and ActionType == 'LogonFailed'"
+    - "logsourcename(logsourceid) ilike '%Windows%'"
+    - "qidname(qid) = 'Authentication Failure'"
   optional_fields:
     username:
-      pattern: "AccountName has '{value}'"
+      pattern: "username ilike '%{value}%'"
       type: str
-      help: "Filter by username"
+      help: "Filter by username (substring match)"
     source_ip:
-      pattern: "IPAddress == '{value}'"
+      pattern: "sourceip = '{value}'"
       type: str
-      help: "Filter by sourceip"
-      validation: "ip"
-  post_pipeline: "project AccountName, DeviceName, IPAddress, Timestamp"
+      help: "Filter by source IP address"
+    event_id:
+      pattern: "eventid = '{value}'"
+      type: str
+      help: "Filter by Windows event ID"
 ```
 
-Each template (e.g., `failed_logins`) defines the structure of a query, where `base` represents the foundational query logic. The `required_fields` specify mandatory parameters necessary to construct an effective query and are typically determined by the implementer during the template design phase. The `optional_fields` section allows the template to support additional user-defined input to customize the search. 
+Each template (e.g., `failed_logins`) defines the structure of a query, where `base` represents the table query logic. The `required_fields` identifies mandatory parameters to construct an effective query and are typically determined by the implementer during the template design phase. The `optional_fields` section allows the template to support additional user-defined input to customize the search. 
 
-Each `optional_fields` must include a `pattern` (used for input validation) and a `help` text, which provides guidance on the field's purpose. This is particularly useful in CLI mode or automated workflows. For Defender queries, an optional `post_pipeline` allows you to toggle between raw event searches and structured, aggregated results (e.g., counts grouped by relevant fields). 
+Each `optional_fields` must include a `pattern` (used for input validation) and a `help` text, which provides guidance on the field's purpose. This is useful in CLI mode or automated workflows. For Defender queries, an optional field `post_pipeline` allows you to toggle between raw event searches and structured, aggregated results (e.g., counts grouped by relevant fields). 
 
 Finally, the `validation` block, defines the backend checks to ensure the provided input adheres to expected formats or values. For more practical examples, see the `Usage` section. 
 
 ### Adding New Templates
-To add a new template, simply append a new entry string using the same structure to the appropriate YAML file (e.g., `templates/elastic.yaml`). No code changes are required.
+To add a new template, simply append a new entry string using the same structure to the appropriate YAML file (e.g., `templates/elastic.yaml`).
 
-##  Pending Features
-- Add integration with a yamlbuilder to automate threat-hunting templates using ML/AI on a local setup.
-- Save custom query profiles based on current threat-landscape that can be easily translated into queries.
+## Important !!!
+Please check your field mappings, as they might differ from those defined in the templates since some of them are custom implemented. For example, for **Request Mode** to work: `("Request Mode" ilike '%POST%' or "Request Mode" ilike '%GET%')` the field must be correctly mapped and parsed in your environment to fetch HTTP verbs.
+
 
 ##  Usage
 
