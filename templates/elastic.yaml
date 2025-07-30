@@ -1,176 +1,271 @@
 failed_logins:
   description: "Search for authentication failures with optional filters."
-  base: "event.category: 'authentication'"
+  base: "event.category: \"authentication\""
   required_fields:
-    - "event.outcome: 'failure'"
+    - "event.outcome: \"failure\""
   optional_fields:
     user.name:
-      pattern: "user.name: '{value}'"
+      pattern: "user.name: *{value}*"
       type: str
-      help: "Filter by username"
+      help: "Filter by username (substring match)"
     source.ip:
-      pattern: "source.ip: '{value}'"
+      pattern: "source.ip: \"{value}\""
       type: str
-      help: "Filter by sourceip"
+      help: "Filter by source IP address"
       validation: "ip"
+    event.code:
+      pattern: "event.code: \"{value}\""
+      type: str
+      help: "Filter by event code"
 
 firewall_block:
   description: "Detect firewall blocks by protocol and port."
-  base: "event.category: 'network'"
+  base: "event.category: \"network\""
   required_fields:
-    - "fortinet.firewall.action: 'blocked'"
+    - "fortinet.firewall.action: \"blocked\""
   optional_fields:
     network.protocol:
-      pattern: "network.protocol: '{value}'"
+      pattern: "network.protocol: *{value}*"
       type: str
-      help: "Filter by network protocol"
+      help: "Filter by network protocol (substring match)"
     destination.port:
-      pattern: "destination.port: '{value}'"
+      pattern: "destination.port: {value}"
       type: int
-      help: "Filter by destinationport"
+      help: "Filter by destination port"
       validation: "integer"
+    source.ip:
+      pattern: "source.ip: \"{value}\""
+      type: str
+      help: "Filter by source IP address"
+      validation: "ip"
+    destination.ip:
+      pattern: "destination.ip: \"{value}\""
+      type: str
+      help: "Filter by destination IP address"
+      validation: "ip"
 
 dns_domains:
   description: "Look for suspicious DNS domains in threat feed or fast lookup."
-  base: "event.category: 'network'"
+  base: "event.category: \"network\""
   required_fields:
-    - "network.protocol: 'dns'"
+    - "network.protocol: \"dns\""
   optional_fields:
     url.domain:
-      pattern: "url.domain: '{value}'"
+      pattern: "url.domain: *{value}*"
       type: str
-      help: "Filter by domain name"
+      help: "Filter by domain name (substring match)"
     source.ip:
-      pattern: "source.ip: '{value}'"
+      pattern: "source.ip: \"{value}\""
       type: str
-      help: "Filter by sourceip"
+      help: "Filter by source IP address"
       validation: "ip"
+    destination.ip:
+      pattern: "destination.ip: \"{value}\""
+      type: str
+      help: "Filter by destination IP address"
+      validation: "ip"
+    dns.question.type:
+      pattern: "dns.question.type: *{value}*"
+      type: str
+      help: "Filter by DNS query type (substring match)"
 
 rce_attempts:
   description: "Detect potential remote command execution attempts in logs."
-  base: "event.category: 'process'"
+  base: "event.category: \"process\""
   required_fields:
-    - "(process.command_line: '*Invoke-WebRequest*' or process.command_line: '*IEX*' or process.command_line: '*curl*' or process.command_line: '*wget*' or process.command_line: '*base64*')"
+    - "(process.command_line: *Invoke-WebRequest* or process.command_line: *IEX* or process.command_line: *curl* or process.command_line: *wget* or process.command_line: *base64*)"
   optional_fields:
     source.ip:
-      pattern: "source.ip: '{value}'"
+      pattern: "source.ip: \"{value}\""
       type: str
-      help: "Filter by sourceip"
+      help: "Filter by source IP address"
       validation: "ip"
     destination.ip:
-      pattern: "destination.ip: '{value}'"
+      pattern: "destination.ip: \"{value}\""
       type: str
-      help: "Filter by destinationip"
+      help: "Filter by destination IP address"
       validation: "ip"
-    process.executable:
-      pattern: "process.executable: '{value}'"
+    user.name:
+      pattern: "user.name: *{value}*"
       type: str
-      help: "Filter by process executable"
+      help: "Filter by username (substring match)"
+    process.executable:
+      pattern: "process.executable: *{value}*"
+      type: str
+      help: "Filter by process executable (substring match)"
+    process.command_line:
+      pattern: "process.command_line: *{value}*"
+      type: str
+      help: "Filter by command line content (substring match)"
 
 powershell_execution:
   description: "Find suspicious PowerShell execution events."
-  base: "event.category: 'process'"
+  base: "event.category: \"process\""
   required_fields:
-    - "event.dataset: 'windows.powershell_operational'"
+    - "event.dataset: \"windows.powershell_operational\""
   optional_fields:
     user.name:
-      pattern: "user.name: '{value}'"
+      pattern: "user.name: *{value}*"
       type: str
-      help: "Filter by username"
+      help: "Filter by username (substring match)"
     message:
-      pattern: "message: '*{value}*'"
+      pattern: "message: *{value}*"
       type: str
-      help: "Filter by message content"
+      help: "Filter by message content (substring match)"
+    process.command_line:
+      pattern: "process.command_line: *{value}*"
+      type: str
+      help: "Filter by command line content (substring match)"
+    source.ip:
+      pattern: "source.ip: \"{value}\""
+      type: str
+      help: "Filter by source IP address"
+      validation: "ip"
 
 rdp_loopback_traffic:
   description: "Detect RDP (port 3389) traffic involving loopback addresses (127.0.0.0/8) using event code 5156."
-  base: "event.category: 'network'"
+  base: "event.category: \"network\""
   required_fields:
-    - "event.code: '5156'"
+    - "event.code: \"5156\""
     - "(source.port: 3389 or destination.port: 3389)"
-    - "(source.ip: 127.0.0.0/8 or destination.ip: 127.0.0.0/8)"
+    - "(source.ip: \"127.0.0.0/8\" or destination.ip: \"127.0.0.0/8\")"
   optional_fields:
     source.ip:
-      pattern: "source.ip: '{value}'"
+      pattern: "source.ip: \"{value}\""
       type: str
-      help: "Filter by sourceip"
+      help: "Filter by source IP address"
       validation: "ip"
     destination.ip:
-      pattern: "destination.ip: '{value}'"
+      pattern: "destination.ip: \"{value}\""
       type: str
-      help: "Filter by destinationip"
+      help: "Filter by destination IP address"
       validation: "ip"
+    source.port:
+      pattern: "source.port: {value}"
+      type: int
+      help: "Filter by source port"
+      validation: "integer"
+    destination.port:
+      pattern: "destination.port: {value}"
+      type: int
+      help: "Filter by destination port"
+      validation: "integer"
 
 builtin_account_enabled:
   description: "Detect when built-in accounts like Guest, DefaultAccount, or Administrator are enabled using event code 4722."
-  base: "event.category: 'authentication'"
+  base: "event.category: \"authentication\""
   required_fields:
-    - "event.code: '4722'"
-    - "(user.name: 'guest' or user.name: 'defaultaccount' or user.name: 'administrator')"
+    - "event.code: \"4722\""
+    - "(user.name: \"guest\" or user.name: \"defaultaccount\" or user.name: \"administrator\")"
   optional_fields:
     source.ip:
-      pattern: "source.ip: '{value}'"
+      pattern: "source.ip: \"{value}\""
       type: str
-      help: "Filter by sourceip"
+      help: "Filter by source IP address"
       validation: "ip"
+    user.name:
+      pattern: "user.name: *{value}*"
+      type: str
+      help: "Filter by username (substring match)"
 
 service_task_creation_commands:
   description: "Detect process creation events involving commands for service creation or scheduled tasks."
-  base: "event.category: 'process'"
+  base: "event.category: \"process\""
   required_fields:
-    - "event.code: '4688'"
-    - "(process.command_line: '*create*' or process.command_line: '*/SC*' or process.command_line: '*/TN*')"
+    - "event.code: \"4688\""
+    - "(process.command_line: *create* or process.command_line: */SC* or process.command_line: */TN*)"
   optional_fields:
     source.ip:
-      pattern: "source.ip: '{value}'"
+      pattern: "source.ip: \"{value}\""
       type: str
-      help: "Filter by sourceip"
+      help: "Filter by source IP address"
       validation: "ip"
     user.name:
-      pattern: "user.name: '{value}'"
+      pattern: "user.name: *{value}*"
       type: str
-      help: "Filter by username"
+      help: "Filter by username (substring match)"
     process.command_line:
-      pattern: "process.command_line: '*{value}*'"
+      pattern: "process.command_line: *{value}*"
       type: str
-      help: "Filter by command line content"
-
+      help: "Filter by command line content (substring match)"
+    process.executable:
+      pattern: "process.executable: *{value}*"
+      type: str
+      help: "Filter by process executable (substring match)"
 
 suspicious_command_flags:
   description: "Detect process creation events with commands containing /transfer, /priority, or /download flags using event code 4688."
-  base: "event.category: 'process'"
+  base: "event.category: \"process\""
   required_fields:
-    - "event.code: '4688'"
-    - "(process.command_line: '*/transfer*' or process.command_line: '*/priority*' or process.command_line: '*/download*')"
+    - "event.code: \"4688\""
+    - "(process.command_line: */transfer* or process.command_line: */priority* or process.command_line: */download*)"
   optional_fields:
     source.ip:
-      pattern: "source.ip: '{value}'"
+      pattern: "source.ip: \"{value}\""
       type: str
-      help: "Filter by sourceip"
+      help: "Filter by source IP address"
       validation: "ip"
     user.name:
-      pattern: "user.name: '{value}'"
+      pattern: "user.name: *{value}*"
       type: str
-      help: "Filter by username"
+      help: "Filter by username (substring match)"
+    process.command_line:
+      pattern: "process.command_line: *{value}*"
+      type: str
+      help: "Filter by command line content (substring match)"
+    process.executable:
+      pattern: "process.executable: *{value}*"
+      type: str
+      help: "Filter by process executable (substring match)"
 
 dns_txt_base64_payloads:
   description: "Detect DNS TXT requests from specified DNS log sources."
-  base: "event.category: 'network'"
+  base: "event.category: \"network\""
   required_fields:
-    - "network.protocol: 'dns'"
-    - "message: '*TXT*'"
+    - "network.protocol: \"dns\""
+    - "message: *TXT*"
   optional_fields:
     source.ip:
-      pattern: "source.ip: '{value}'"
+      pattern: "source.ip: \"{value}\""
       type: str
-      help: "Filter by sourceip"
+      help: "Filter by source IP address"
       validation: "ip"
     destination.ip:
-      pattern: "destination.ip: '{value}'"
+      pattern: "destination.ip: \"{value}\""
       type: str
-      help: "Filter by destinationip"
+      help: "Filter by destination IP address"
       validation: "ip"
     dns.question.type:
-      pattern: "dns.question.type: '{value}'"
+      pattern: "dns.question.type: *{value}*"
       type: str
-      help: "Filter by DNS query type"
+      help: "Filter by DNS query type (substring match)"
+    url.domain:
+      pattern: "url.domain: *{value}*"
+      type: str
+      help: "Filter by domain name (substring match)"
+
+cve_2025_53770:
+  description: "Detects compiled ASPX web shell dropped during exploitation of SharePoint RCE vulnerability CVE-2025-53770."
+  base: "event.category: \"network\""
+  required_fields:
+    - "(url.original: *ToolPane.aspx* or url.original: *spinstall* or url.original: *signout* or url.original: *ghostfile*)"
+    - "(http.request.method: \"POST\" or http.request.method: \"GET\")"
+  optional_fields:
+    source.ip:
+      pattern: "source.ip: \"{value}\""
+      type: str
+      help: "Filter by source IP address"
+      validation: "ip"
+    user.name:
+      pattern: "user.name: *{value}*"
+      type: str
+      help: "Filter by username (substring match)"
+    url.original:
+      pattern: "url.original: *{value}*"
+      type: str
+      help: "Filter by URL content (substring match)"
+    destination.ip:
+      pattern: "destination.ip: \"{value}\""
+      type: str
+      help: "Filter by destination IP address"
+      validation: "ip"
