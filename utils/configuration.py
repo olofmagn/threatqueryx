@@ -2,16 +2,43 @@ import ipaddress
 import os
 import re
 import sys
+import logging
 from typing import Dict, Any, Literal, Tuple, Optional
 
 import questionary
 import yaml
 
-from utils.ui_constants import DEFAULT_ENCODING, VALID_PLATFORMS
+from utils.ui_constants import DEFAULT_ENCODING, LOG_FORMAT, DEFAULT_LOGGER_NAME, VALID_PLATFORMS, DEFAULT_LOG_LEVEL
+
 
 """
 Configuration utility
 """
+
+
+def get_logger(
+    name: str = DEFAULT_LOGGER_NAME, level: int = DEFAULT_LOG_LEVEL
+) -> logging.Logger:
+    """
+    Logger utility
+
+    Args:
+    - name (str): Logger name (default: ThreatQueryX)
+    - level (int): Logging level (default: INFO)
+
+    Returns:
+    - logging.Logger: Configured logger instance
+    """
+
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+
+    if not logger.hasHandlers():
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter(LOG_FORMAT)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+    return logger
 
 
 def load_templates(platform: str) -> Dict[str, Any]:
