@@ -1,5 +1,5 @@
 import sys
-import questionary 
+import questionary
 
 from typing import Dict, Tuple, Any
 
@@ -16,6 +16,7 @@ from utils.generate_queries import build_query
 """
 Cli interface
 """
+
 
 class QueryCli:
     def __init__(

@@ -8,7 +8,13 @@ from typing import Dict, Any, Literal, Tuple, Optional
 import questionary
 import yaml
 
-from utils.ui_constants import DEFAULT_ENCODING, LOG_FORMAT, DEFAULT_LOGGER_NAME, VALID_PLATFORMS, DEFAULT_LOG_LEVEL
+from utils.ui_constants import (
+    DEFAULT_ENCODING,
+    LOG_FORMAT,
+    DEFAULT_LOGGER_NAME,
+    VALID_PLATFORMS,
+    DEFAULT_LOG_LEVEL,
+)
 
 
 """
