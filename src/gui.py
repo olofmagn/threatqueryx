@@ -618,6 +618,7 @@ class QueryGui:
             messagebox.showerror(
                 "Invalid template", f"Template {template_name} not found"
             )
+            logger.info("Invalid template")
             return
 
         template = self.templates[template_name]
@@ -690,18 +691,21 @@ class QueryGui:
 
         if not template_name:
             messagebox.showerror("Error", "Invalid template choice.")
+            logger.info("Invalid template choice")
             return 0
 
         if template_name not in self.templates:
             messagebox.showerror(
                 "Error", "Template '{}' not found.".format(template_name)
             )
+            logger.info("Template not found")
 
         template = self.templates[template_name]
 
         duration = normalize_lookback(lookback, self.platform)
         if duration is None:
             messagebox.showerror("Error", "Invalid time range")
+            logger.info("Invalid time range")
             return 0
 
         inputs = {}
@@ -712,6 +716,7 @@ class QueryGui:
                 valid, msg = validate(value, validation_type)
                 if not valid:
                     messagebox.showerror("Invalid input", f"{field}: {msg}")
+                    logger.info("Invalid input")
                     return 0
                 inputs[field] = value
 
@@ -727,19 +732,23 @@ class QueryGui:
             self.output_text.delete("1.0", tk.END)
             self.output_text.insert(tk.END, query)
         except Exception as e:
-            logger.info("Build failure")
             messagebox.showerror("Build Error", str(e))
+            logger.info("Build failure")
 
     def _copy(self) -> None:
         """
         Copy query to clipboard
         """
-
-        query = self.output_text.get("1.0", tk.END).strip()
-        self.root.clipboard_clear()
-        self.root.clipboard_append(query)
-        logger.info("Query copied to clipboard")
-        messagebox.showinfo("Copied", "Query copied to clipboard!")
+        
+        try:
+            query = self.output_text.get("1.0", tk.END).strip()
+            self.root.clipboard_clear()
+            self.root.clipboard_append(query)
+            messagebox.showinfo("Copied", "Query copied to clipboard!")
+            logger.info("Query copied to clipboard")
+        except Exception as e:
+            messagebox.showinfo("Failed to copy query to clipboard")
+            logger.info("Failed to copy query to clipboard")
 
     # ==========================================
     # EVENT HANDLERS
