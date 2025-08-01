@@ -6,7 +6,7 @@ from typing import List, Optional
 
 from utils.generate_queries import build_query
 
-from utils.configuration import load_templates, normalize_lookback, validate
+from utils.configuration import load_templates, normalize_lookback, validate, get_logger
 
 from utils.ui_constants import (
     DEFAULT_MODE,
@@ -34,6 +34,8 @@ from utils.ui_constants import (
     ARROW_BUTTON_WIDTH,
     ARROW_BUTTON_PADDING,
 )
+
+logger = get_logger()
 
 """
 GUI INTERFACE
@@ -121,6 +123,7 @@ def cycle_time_range_value(
         current_idx = DEFAULT_TIME_RANGE_INDEX
 
     new_idx = (current_idx + direction) % len(display_values)
+    logger.info("Duration changed")
 
     return display_values[new_idx]
 
@@ -581,6 +584,7 @@ class QueryGui:
                 self.template_cache[platform] = (self.templates, self.base_queries)
             except Exception as e:
                 messagebox.showerror("Error loading templates", str(e))
+                logger.error("Error loading templates")
                 self.templates = {}
 
         self.template_var.set("")
@@ -614,6 +618,7 @@ class QueryGui:
             messagebox.showerror(
                 "Invalid template", f"Template {template_name} not found"
             )
+            logger.info("Invalid template")
             return
 
         template = self.templates[template_name]
@@ -686,18 +691,21 @@ class QueryGui:
 
         if not template_name:
             messagebox.showerror("Error", "Invalid template choice.")
+            logger.info("Invalid template choice")
             return 0
 
         if template_name not in self.templates:
             messagebox.showerror(
                 "Error", "Template '{}' not found.".format(template_name)
             )
+            logger.info("Template not found")
 
         template = self.templates[template_name]
-        duration = normalize_lookback(lookback, self.platform)
 
+        duration = normalize_lookback(lookback, self.platform)
         if duration is None:
             messagebox.showerror("Error", "Invalid time range")
+            logger.info("Invalid time range")
             return 0
 
         inputs = {}
@@ -708,6 +716,7 @@ class QueryGui:
                 valid, msg = validate(value, validation_type)
                 if not valid:
                     messagebox.showerror("Invalid input", f"{field}: {msg}")
+                    logger.info("Invalid input")
                     return 0
                 inputs[field] = value
 
@@ -719,20 +728,27 @@ class QueryGui:
             query = build_query(
                 template, inputs, duration, platform, self.base_queries, include_post
             )
+            logger.info("Query issued")
             self.output_text.delete("1.0", tk.END)
             self.output_text.insert(tk.END, query)
         except Exception as e:
             messagebox.showerror("Build Error", str(e))
+            logger.info("Build failure")
 
     def _copy(self) -> None:
         """
         Copy query to clipboard
         """
-
-        query = self.output_text.get("1.0", tk.END).strip()
-        self.root.clipboard_clear()
-        self.root.clipboard_append(query)
-        messagebox.showinfo("Copied", "Query copied to clipboard!")
+        
+        try:
+            query = self.output_text.get("1.0", tk.END).strip()
+            self.root.clipboard_clear()
+            self.root.clipboard_append(query)
+            messagebox.showinfo("Copied", "Query copied to clipboard!")
+            logger.info("Query copied to clipboard")
+        except Exception as e:
+            messagebox.showinfo("Failed to copy query to clipboard")
+            logger.info("Failed to copy query to clipboard")
 
     # ==========================================
     # EVENT HANDLERS

@@ -1,3 +1,5 @@
+import logging
+
 # =============================================================================
 # CONSTANTS AND CONFIGURATION
 # =============================================================================
@@ -7,6 +9,9 @@ DEFAULT_MODE = "qradar"
 DEFAULT_ENCODING = "utf-8"
 DEFAULT_TIME_RANGE_INDEX = 1  # "10 MINUTES"
 PLATFORMS = ["qradar", "defender", "elastic"]
+DEFAULT_LOGGER_NAME = "ThreatQueryX"
+DEFAULT_LOG_LEVEL = logging.INFO
+LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 
 # Window Configuration
 DEFAULT_WINDOW_WIDTH = 500
