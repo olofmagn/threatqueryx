@@ -4,7 +4,7 @@ A cross-platform desktop GUI tool that helps security analysts build and customi
 - Elasticsearch
 - Microsoft Defender
 
-The tool loads pre-defined YAML templates and allows you to select parameters such as IPs, ports, and time ranges—building valid queries dynamically without writing syntax by hand.
+The tool loads pre-defined YAML templates and allows you to select parameters such as IPs, ports, and time ranges—building valid and efficent queries dynamically without writing syntax by hand.
 
 ##  Features
 -  Template-based Query Generation (via YAML files).
@@ -44,27 +44,33 @@ The tool loads pre-defined YAML templates and allows you to select parameters su
 - External dependencies as listed in `requirements.txt`.
 
 ## Template Format (YAML)
-Each platform (QRadar, Elasticsearch, Defender) has its own syntax and base queries in their respective YAML files. See `templates/qradar.yaml`, `templates/elastic.yaml`, and `templates/defender.yaml` for platform-specific examples.
+Each platform (QRadar, Elasticsearch, Defender) has its own syntax and `base_queries` in their respective YAML files. See `templates/qradar.yaml`, `templates/elastic.yaml`, and `templates/defender.yaml` for platform-specific examples.
 
-The examples below demonstrate QRadar AQL syntax.
+> [!NOTE]  
+> The examples below demonstrate with the QRadar AQL syntax.
+
 
 ```yaml
 base_queries:
-  authentication: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username FROM events"
+  events: "SELECT username, QIDNAME(qid) as \"Event Type\", COUNT() as \"Event Count\" FROM events"
   network: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, sourceport, destinationip, destinationport FROM events"
   process: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username, \"Command\", \"Process Name\" FROM events"
   exploit: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, destinationip, \"Command\" FROM events"
   dns: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, destinationip, \"URL Domain\" FROM events"
 ```
+
 Failed login template:
 ```yaml
 failed_logins:
-  description: "Search for authentication failures with optional filters."
+  description: "Search for audit failures with optional filters."
   base: "{authentication}"
   required_fields:
     - "logsourcename(logsourceid) ilike '%Windows%'"
-    - "qidname(qid) = 'Authentication Failure'"
   optional_fields:
+    event_id:
+      pattern: "eventid = '{value}'"
+      type: str
+      help: "Filter by Windows event ID"
     username:
       pattern: "username ilike '%{value}%'"
       type: str
@@ -73,23 +79,139 @@ failed_logins:
       pattern: "sourceip = '{value}'"
       type: str
       help: "Filter by source IP address"
-    event_id:
-      pattern: "eventid = '{value}'"
-      type: str
-      help: "Filter by Windows event ID"
 ```
 
 Each template (e.g., `failed_logins`) defines the structure of a query, where `base` represents the table query logic. The `required_fields` identifies mandatory parameters to construct an effective query and are typically determined by the implementer during the template design phase. The `optional_fields` section allows the template to support additional user-defined input to customize the search. 
+
+> [!TIP]
+> Personally, I like to use threshold queries for anomaly detection. For example, combining `base_query: events` with template `usernames_with_high_eventcount` generates:
+> 
+> ```sql
+> SELECT username, QIDNAME(qid) as "Event Type", COUNT() as "Event Count" 
+> FROM events 
+> WHERE username is NOT NULL 
+> GROUP BY username, qid 
+> HAVING COUNT() > 1000 
+>   AND username ILIKE '%admin%' 
+> LAST 30 MINUTES
+> ```
+> 
+> This helps identify accounts with unusually high activity that might indicate compromise or misuse.
+
 
 Each `optional_fields` must include a `pattern` (used for input validation) and a `help` text, which provides guidance on the field's purpose. This is useful in CLI mode or automated workflows. For Defender queries, an optional field `post_pipeline` allows you to toggle between raw event searches and structured, aggregated results (e.g., counts grouped by relevant fields). 
 
 Finally, the `validation` block, defines the backend checks to ensure the provided input adheres to expected formats or values. For more practical examples, see the `Usage` section. 
 
+> [!IMPORTANT]  
+> Please check your field mappings, as they might differ from those defined in the templates since some of them are custom implemented. For example, for **Request Mode** to work in Qradar platform: `("Request Mode" ilike '%POST%' or "Request Mode" ilike '%GET%')` the field must be correctly mapped and parsed in your environment to fetch HTTP verbs.
+
+
+
 ### Adding New Templates
 To add a new template, simply append a new entry string using the same structure to the appropriate YAML file (e.g., `templates/elastic.yaml`).
 
-## Important !!!
-Please check your field mappings, as they might differ from those defined in the templates since some of them are custom implemented. For example, for **Request Mode** to work: `("Request Mode" ilike '%POST%' or "Request Mode" ilike '%GET%')` the field must be correctly mapped and parsed in your environment to fetch HTTP verbs.
+
+> [!IMPORTANT]  
+> Note that some templates have `base:{events}` (that involves counts) do not use any projection or sorting by dates since we are focusing on raw events and further research:
+
+>```yaml
+> usernames_with_high_eventcount:
+> description: "Detect suspicious high event count from users"
+>  base: "{events}"
+>  required_fields:
+>   - "username is NOT NULL GROUP BY username, qid HAVING COUNT() > 1000"
+>  optional_fields:
+>    username:
+>      pattern: "username ILIKE '%{value}%'"
+>      type: str 
+>      help: "Filter by username"
+>```
+>
+> This helps identify anomalies or events that might be interesting for further analysis.
+
+
+
+## Not sure on how to use the information from the searches?
+- Checkout `docs/document.pdf` where I provide general opinions on how to perform threat hunting.
+- But in general, the below Side-by-Side Circular flow illustrate the process on how I do it:
+
+```
+
+ ┌─────────────────────┐                   ┌─────────────────────┐
+ │ Done with hunt |    │ ◄ -----Done------ │    Analysis         │
+ │ Instanitate new     │                   │                     │                     
+ └─────────┬───────────┘                   └─────────────────────┘
+           │                                          ▲  
+           │                                          │  
+           ▼                                          │
+┌─────────────────────┐                    ┌─────────────────────┐
+│       Start         │                    │   Perform deep      │ 
+│                     │                    │   searches          │
+└──────────┬──────────┘                    └─────────────────────┘
+           │                                          ▲  
+           │                                          │ 
+           │                                          │  
+           │                               ┌─────────────────────┐ 
+           │                               │   Correlate data    │
+           │                               └─────────────────────┘
+           │                                          ▲
+           │                                          │
+           │                                          │
+           ▼                                          │
+┌─────────────────────┐                    ┌─────────────────────┐
+│  Define template && │                    │   Get result from   │
+│  Issue query        │                    │    query            │
+└──────────┬──────────┘                    └─────────────────────┘
+           │                                          ▲        
+           │                                          │
+           │                                          │
+           ▼                                          │
+┌─────────────────────┐                    ┌─────────────────────┐
+│ Get result from     │                    │ Use optional        │
+│ query               │                    │ fields              │
+└──────────┬──────────┘                    └─────────────────────┘
+           │                                           ▲
+           │                                           │
+           ▼                                           │
+┌─────────────────────┐                                │
+│ Correlate data      │                                │
+└──────────┬──────────┘                                │
+           │                                           │
+           │                                           │
+           ▼                                           │
+┌─────────────────────┐         ◇──────────◇           │
+│ Checking field      │         │ Optional │           │
+│ statistics          │-------▶ │ fields   │----Yes----┘
+└─────────────────────┘         │ needed?  │
+                                ◇────┬─────◇
+                                     |
+                                     No
+                                     | 
+                                     ▼
+                              ┌─────────────────────┐
+                              │ Perform deep        │
+                              │ searches            │
+                              └──────┬──────────────┘ 
+                                     │
+                                     │
+                                     ▼                  
+                              ┌─────────────────────┐ 
+                              │   Analysis          │
+                              │                     │
+                              └─────────────────────┘
+                                     │
+                                     │
+                                     ▼ 
+                              ┌─────────────────────┐                ┌─────────────────────┐
+                              │   Done with hunt    │                │ Go back to start    │ 
+                              │                     │ -------------▶ │                     │ 
+                              └─────────────────────┘                └─────────────────────┘
+```
+
+
+> [!NOTE]  
+>  The `optional_fields` allows some flexibility since some of the queries are statically defined because they focus on a specific behaviour or pattern to capture. I'll specify this in a more detail in the above template format section.
 
 
 ##  Usage
