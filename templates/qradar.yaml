@@ -1,4 +1,5 @@
 base_queries:
+  events: "SELECT username, QIDNAME(qid) as \"Event Type\", COUNT() as \"Event Count\" FROM events"
   authentication: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username FROM events"
   network: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, sourceport, destinationip, destinationport FROM events"
   process: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username, \"Command\", \"Process Name\" FROM events"
@@ -6,12 +7,15 @@ base_queries:
   dns: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, destinationip, \"URL Domain\" FROM events"
 
 failed_logins:
-  description: "Search for authentication failures with optional filters."
+  description: "Search for audit failures with optional filters."
   base: "{authentication}"
   required_fields:
     - "logsourcename(logsourceid) ilike '%Windows%'"
-    - "qidname(qid) = 'Authentication Failure'"
   optional_fields:
+    event_id:
+      pattern: "eventid = '{value}'"
+      type: str
+      help: "Filter by Windows event ID"
     username:
       pattern: "username ilike '%{value}%'"
       type: str
@@ -20,10 +24,6 @@ failed_logins:
       pattern: "sourceip = '{value}'"
       type: str
       help: "Filter by source IP address"
-    event_id:
-      pattern: "eventid = '{value}'"
-      type: str
-      help: "Filter by Windows event ID"
 
 firewall_block:
   description: "Detect firewall blocks by protocol and port."
@@ -108,16 +108,6 @@ rdp_loopback_traffic:
       pattern: "destinationip = '{value}'"
       type: str
       help: "Filter by destination IP address"
-    source_port:
-      pattern: "sourceport = {value}"
-      type: int
-      help: "Filter by source port"
-      validation: "integer"
-    destination_port:
-      pattern: "destinationport = {value}"
-      type: int
-      help: "Filter by destination port"
-      validation: "integer"
 
 builtin_account_enabled:
   description: "Detect when built-in accounts like Guest, DefaultAccount, or Administrator are enabled."
@@ -152,10 +142,6 @@ service_task_creation_commands:
       pattern: "username ilike '%{value}%'"
       type: str
       help: "Filter by username (substring match)"
-    command_contains:
-      pattern: "\"Command\" ilike '%{value}%'"
-      type: str
-      help: "Filter by command content (substring match)"
 
 suspicious_command_flags:
   description: "Detect process creation events with commands containing /transfer, /priority, or /download flags."
@@ -173,17 +159,17 @@ suspicious_command_flags:
       pattern: "username ilike '%{value}%'"
       type: str
       help: "Filter by username (substring match)"
-    command_contains:
-      pattern: "\"Command\" ilike '%{value}%'"
-      type: str
-      help: "Filter by command content (substring match)"
 
-dns_txt_base64_payloads:
+dns_requests_to_domains:
   description: "Detect suspicious DNS requests."
   base: "{dns}"
   required_fields:
-    - "logsourcename(logsourceid) ilike '%Forti%'"
+    - "destinationport '53'"
   optional_fields:
+    logsource_name:
+      pattern: "logsourcename(logsourceid) ilike '%{value}%'"
+      type: str
+      help: "Filter by logsourcename"
     url_domain:
       pattern: "\"URL Domain\" ilike '%{value}%'"
       type: str
@@ -197,6 +183,17 @@ dns_txt_base64_payloads:
       type: str
       help: "Filter by destination IP address"
 
+usernames_with_high_eventcount:
+  description: "Detect suspicious high event count from users"
+  base: "{events}"
+  required_fields:
+    - "username is NOT NULL GROUP BY username, qid HAVING COUNT() > 1000"
+  optional_fields:
+    username:
+      pattern: "username ILIKE '%{value}%'"
+      type: str
+      help: "Filter by username"
+
 cve_2025_53770:
   description: "Detects compiled ASPX web shell dropped during exploitation of SharePoint RCE vulnerability CVE-2025-53770."
   base: "{network}"
@@ -208,11 +205,8 @@ cve_2025_53770:
       pattern: "logsourcename(logsourceid) ilike '%{value}%'"
       type: str
       help: "Filter by log source name (substring match)"
-    url_contains:
-      pattern: "URL ilike '%{value}%'"
-      type: str
-      help: "Filter by URL content (substring match)"
     source_ip:
       pattern: "sourceip = '{value}'"
       type: str
       help: "Filter by source IP address"
+
