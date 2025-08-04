@@ -2,18 +2,12 @@ failed_logins:
   description: "Identify failed sign-in attempts in Defender logs."
   base: "IdentityLogonEvents"
   required_fields:
-    - "LogonType == 'Interactive' and ActionType == 'LogonFailed'"
+    - "ActionType == 'LogonFailed' and isnotempty(AccountName) | summarize count() by LogonType, AccountName"
   optional_fields:
     username:
       pattern: "AccountName has '{value}'"
       type: str
       help: "Filter by username (substring match)"
-    source_ip:
-      pattern: "IPAddress == '{value}'"
-      type: str
-      help: "Filter by source IP address"
-      validation: "ip"
-  post_pipeline: "project AccountName, DeviceName, DeviceId, IPAddress, Timestamp"
 
 phishing_site:
   description: "Identify network connections to potential phishing domains."
@@ -75,7 +69,7 @@ detect_string_arguments:
       pattern: "AccountName has '{value}'"
       type: str
       help: "Filter by username (substring match)"
-    command_contains:
+    command_line:
       pattern: "ProcessCommandLine contains '{value}'"
       type: str
       help: "Filter by command line content (substring match)"

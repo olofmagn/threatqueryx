@@ -32,6 +32,7 @@ def build_query(
         raise KeyError("Template missing required 'base' field")
 
     base = template["base"]
+    key_name = None
     if base_queries and base.startswith("{") and base.endswith("}"):
         key_name = base[1:-1]
         if key_name in base_queries:
@@ -56,7 +57,10 @@ def build_query(
     match platform:
         case "qradar":
             condition_string = " and ".join(conditions) if conditions else "true"
-            query = f"{base} where {condition_string} ORDER BY devicetime DESC LAST {duration}"
+            if key_name.lower() == "events":
+                query = f"{base} where {condition_string} LAST {duration}"
+            else:
+                query = f"{base} where {condition_string} ORDER BY devicetime DESC LAST {duration}"
         case "defender":
             all_conditions = conditions + [f"Timestamp > ago({duration})"]
             query = base

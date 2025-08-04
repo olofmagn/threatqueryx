@@ -48,7 +48,7 @@ dns_domains:
   description: "Look for suspicious DNS domains in threat feed or fast lookup."
   base: "event.category: \"network\""
   required_fields:
-    - "network.protocol: \"dns\""
+    - "network.direction: \"outbound\""
   optional_fields:
     url.domain:
       pattern: "url.domain: *{value}*"
@@ -64,10 +64,6 @@ dns_domains:
       type: str
       help: "Filter by destination IP address"
       validation: "ip"
-    dns.question.type:
-      pattern: "dns.question.type: *{value}*"
-      type: str
-      help: "Filter by DNS query type (substring match)"
 
 rce_attempts:
   description: "Detect potential remote command execution attempts in logs."
@@ -89,14 +85,6 @@ rce_attempts:
       pattern: "user.name: *{value}*"
       type: str
       help: "Filter by username (substring match)"
-    process.executable:
-      pattern: "process.executable: *{value}*"
-      type: str
-      help: "Filter by process executable (substring match)"
-    process.command_line:
-      pattern: "process.command_line: *{value}*"
-      type: str
-      help: "Filter by command line content (substring match)"
 
 powershell_execution:
   description: "Find suspicious PowerShell execution events."
