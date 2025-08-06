@@ -190,7 +190,7 @@ usernames_with_high_eventcount:
     - "username is NOT NULL GROUP BY username, qid HAVING COUNT() > 1000"
   optional_fields:
     username:
-      pattern: "username ILIKE '%{value}%'"
+      pattern: "username ilike '%{value}%'"
       type: str
       help: "Filter by username"
 
