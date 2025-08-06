@@ -96,7 +96,7 @@ Each template (e.g., `failed_logins`) defines the structure of a query, where `b
 > LAST 30 MINUTES
 > ```
 > 
-> This helps identify accounts with unusually high activity that might indicate compromise or misuse.
+> This helps identify accounts with unusually high activity that might indicate compromise or misuse with `optional_field: admin`.
 
 
 Each `optional_fields` must include a `pattern` (used for input validation) and a `help` text, which provides guidance on the field's purpose. This is useful in CLI mode or automated workflows. For Defender queries, an optional field `post_pipeline` allows you to toggle between raw event searches and structured, aggregated results (e.g., counts grouped by relevant fields). 
@@ -123,7 +123,7 @@ To add a new template, simply append a new entry string using the same structure
 >   - "username is NOT NULL GROUP BY username, qid HAVING COUNT() > 1000"
 >  optional_fields:
 >    username:
->      pattern: "username ILIKE '%{value}%'"
+>      pattern: "username ilike '%{value}%'"
 >      type: str 
 >      help: "Filter by username"
 >```
@@ -275,6 +275,16 @@ Generated query:
 
 SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username FROM events where logsourcename(logsourceid) ILIKE 'Windows%' and qidname(qid) = 'Authentication Failure' and username ILIKE 'admin' and sourceip = '127.0.0.1' ORDER BY devicetime DESC LAST 30 MINUTES
 ```
+
+## Resources
+
+**Official Documentation:**
+- [QRadar AQL Query Structure](https://www.ibm.com/docs/en/qradar-on-cloud?topic=aql-query-structure) - Official IBM documentation on AQL syntax and structure
+- [Kusto Query Language (KQL)](https://learn.microsoft.com/en-us/kusto/query/?view=azure-data-explorer&preserve-view=true) - Official Microsoft documentation on KQL for Azure Data Explorer and Sentinel
+- [Kibana Query Language (KQL)](https://www.elastic.co/docs/explore-analyze/query-filter/languages/kql) - Official Elastic documentation on KQL syntax and usage
+
+**Community Resources:**
+- [QRadar AQL Queries](https://github.com/System-CTL/QRadar-AQL-Queries) - Additional AQL query examples and patterns (friend of mine and updates regularly)
 
 ##  License
 This project is open-source and licensed under the MIT License. See the LICENSE file for details.
