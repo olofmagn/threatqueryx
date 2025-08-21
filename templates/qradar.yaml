@@ -2,8 +2,8 @@ base_queries:
   events: "SELECT username, QIDNAME(qid) as \"Event Type\", COUNT() as \"Event Count\" FROM events"
   authentication: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username FROM events"
   network: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, sourceport, destinationip, destinationport FROM events"
-  process: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username, \"Command\", \"Process Name\" FROM events"
-  exploit: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, destinationip, \"Command\" FROM events"
+  process: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username, \"Parent Process Name\", \"Process Name\", \"Process Path\", \"Command\" FROM events"
+  file: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, destinationip, \"File\", \"File Path\" FROM events"
   dns: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, destinationip, \"URL Domain\" FROM events"
 
 failed_logins:
@@ -29,7 +29,7 @@ firewall_block:
   description: "Detect firewall blocks by protocol and port."
   base: "{network}"
   required_fields:
-    - "logsourcename(logsourceid) ilike '%Forti%'"
+    - "category = '4003'"
   optional_fields:
     protocol:
       pattern: "protocolname(protocolid) = '{value}'"
@@ -49,24 +49,27 @@ firewall_block:
       type: str
       help: "Filter by destination IP address"
 
-rce_attempts:
-  description: "Detect potential remote command execution attempts in logs."
-  base: "{exploit}"
+exploit_detect:
+  description: "Detect potential exploits in logs."
+  base: "{file}"
   required_fields:
-    - "categoryname(category) = 'Exploit'"
+    - "(category - category % 1000) = '5000'"
   optional_fields:
     source_ip:
       pattern: "sourceip = '{value}'"
       type: str
       help: "Filter by source IP address"
+      file:
+        pattern: "\"Filename\" ilike '{value}'"
+        type: str
+        help: "Filter by filename"
+      file_path:
+        pattern: "\"File path\" ilike '{value}'"
     destination_ip:
       pattern: "destinationip = '{value}'"
       type: str
       help: "Filter by destination IP address"
-    command_contains:
-      pattern: "\"Command\" ilike '%{value}%'"
-      type: str
-      help: "Filter by command content (substring match)"
+      validation: ip
 
 powershell_execution:
   description: "Find suspicious PowerShell execution events."
@@ -164,7 +167,7 @@ dns_requests_to_domains:
   description: "Detect suspicious DNS requests."
   base: "{dns}"
   required_fields:
-    - "destinationport '53'"
+    - "destinationport = '53'"
   optional_fields:
     logsource_name:
       pattern: "logsourcename(logsourceid) ilike '%{value}%'"
@@ -187,8 +190,12 @@ usernames_with_high_eventcount:
   description: "Detect suspicious high event count from users"
   base: "{events}"
   required_fields:
-    - "username is NOT NULL GROUP BY username, qid HAVING COUNT() > 1000"
+    - "username is NOT NULL GROUP BY username"
   optional_fields:
+    count:
+      pattern: "qid HAVING COUNT() > {value}"
+      type: int
+      help: "Filter by event count"
     username:
       pattern: "username ilike '%{value}%'"
       type: str

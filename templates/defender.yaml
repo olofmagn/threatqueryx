@@ -47,8 +47,12 @@ rce_attempts:
   base: "DeviceProcessEvents"
   required_fields:
     - "FileName has_any('powershell.exe', 'cmd.exe', 'wscript.exe', 'cscript.exe')"
-    - "(ProcessCommandLine has_any('Invoke-WebRequest', 'IEX', 'curl', 'wget', 'base64') or ProcessCommandLine contains 'DownloadString')"
+    - "ProcessCommandLine has_any('Invoke-WebRequest', 'IEX', 'curl', 'wget', 'base64') or ProcessCommandLine contains 'DownloadString'"
   optional_fields:
+    remote_session:
+      pattern: "IsProcessRemoteSession = '{value}'"
+      type: str
+      help: "Filter to be able to see if executions were over RDP (True/False)"
     username:
       pattern: "AccountName has '{value}'"
       type: str
@@ -65,6 +69,10 @@ detect_string_arguments:
   required_fields:
     - "FileName has_any('powershell.exe', 'pwsh.exe', 'cmd.exe')"
   optional_fields:
+    remote_session:
+      pattern: "IsProcessRemoteSession = '{value}'"
+      type: str
+      help: "Filter to be able to see executions over RDP (True/False)"
     username:
       pattern: "AccountName has '{value}'"
       type: str
@@ -88,12 +96,33 @@ detect_rdp_traffic:
     action_type:
       pattern: "ActionType == '{value}'"
       type: str
-      help: "Filter by connection action type"
+      help: "Filter by connection action type ('ConnectionSuccess')"
     username:
       pattern: "InitiatingProcessAccountUpn has '{value}'"
       type: str
       help: "Filter by username (substring match)"
   post_pipeline: "project InitiatingProcessAccountUpn, DeviceName, DeviceId, RemoteIP, RemotePort, LocalIP, LocalPort, ActionType, Protocol, Timestamp"
+
+file_create_events:
+  description: "Detect file creation events from unusual directories"
+  base: "DeviceFileEvents"
+  required_fields:
+    - "ActionType == FileCreated"
+  optional_fields:
+    device_name:
+      pattern: "DeviceName has '{value}'"
+      type: str
+      help: "Filter by device name (substring match)"
+    folder_path:
+      pattern: "FolderPath startswith '{value}'"
+      type: str
+      help: "Filter by folderpath by start pattern (incase-sensitive)"
+    additional_fields:
+      pattern: "AdditionalFields contains '{value}'"
+      type: str
+      help: "Filter by additional fields like 'zip'"
+  post_pipeline:
+    "project InitiatingProcessAccountUpn, DeviceName, DeviceId, FolderPath, Timestamp"
 
 cve_2025_53770:
   description: "Detects compiled ASPX web shell dropped during exploitation of SharePoint RCE vulnerability CVE-2025-53770."
