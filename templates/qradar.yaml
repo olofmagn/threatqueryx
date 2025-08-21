@@ -44,10 +44,12 @@ firewall_block:
       pattern: "sourceip = '{value}'"
       type: str
       help: "Filter by source IP address"
+      validation: ip
     destination_ip:
       pattern: "destinationip = '{value}'"
       type: str
       help: "Filter by destination IP address"
+      validation: ip
 
 exploit_detect:
   description: "Detect potential exploits in logs."
@@ -107,10 +109,12 @@ rdp_loopback_traffic:
       pattern: "sourceip = '{value}'"
       type: str
       help: "Filter by source IP address"
+      validation: ip
     destination_ip:
       pattern: "destinationip = '{value}'"
       type: str
       help: "Filter by destination IP address"
+      validation: ip
 
 builtin_account_enabled:
   description: "Detect when built-in accounts like Guest, DefaultAccount, or Administrator are enabled."
