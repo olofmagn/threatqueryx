@@ -53,9 +53,10 @@ Each platform (QRadar, Elasticsearch, Defender) has its own syntax and `base_que
 ```yaml
 base_queries:
   events: "SELECT username, QIDNAME(qid) as \"Event Type\", COUNT() as \"Event Count\" FROM events"
+  authentication: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username FROM events"
   network: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, sourceport, destinationip, destinationport FROM events"
-  process: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username, \"Command\", \"Process Name\" FROM events"
-  exploit: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, destinationip, \"Command\" FROM events"
+  process: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, username, \"Parent Process Name\", \"Process Name\", \"Process Path\", \"Command\" FROM events"
+  file: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, destinationip, \"File\", \"File Path\" FROM events"
   dns: "SELECT DATEFORMAT(devicetime, 'yyyy-MM-dd HH:mm:ss') as event_time, sourceip, destinationip, \"URL Domain\" FROM events"
 ```
 
@@ -115,19 +116,22 @@ To add a new template, simply append a new entry string using the same structure
 > [!IMPORTANT]  
 > Note that some templates have `base:{events}` (that involves counts) do not use any projection or sorting by dates since we are focusing on raw events and further research:
 
->```yaml
-> usernames_with_high_eventcount:
-> description: "Detect suspicious high event count from users"
->  base: "{events}"
->  required_fields:
->   - "username is NOT NULL GROUP BY username, qid HAVING COUNT() > 1000"
->  optional_fields:
->    username:
->      pattern: "username ilike '%{value}%'"
->      type: str 
->      help: "Filter by username"
+```yaml
+usernames_with_high_eventcount:
+  description: "Detect suspicious high event count from users"
+  base: "{events}"
+  required_fields:
+    - "username is NOT NULL GROUP BY username"
+  optional_fields:
+    count:
+      pattern: "qid HAVING COUNT() > {value}"
+      type: int
+      help: "Filter by event count"
+    username:
+      pattern: "username ilike '%{value}%'"
+      type: str
+      help: "Filter by username"
 >```
->
 > This helps identify anomalies or events that might be interesting for further analysis.
 
 
