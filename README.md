@@ -131,7 +131,7 @@ usernames_with_high_eventcount:
       pattern: "username ilike '%{value}%'"
       type: str
       help: "Filter by username"
->```
+```
 > This helps identify anomalies or events that might be interesting for further analysis.
 
 
