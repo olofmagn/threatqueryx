@@ -20,6 +20,7 @@ The tool loads pre-defined YAML templates and allows you to select parameters su
 │   ├── document.pdf
 │   ├── document.tex
 │   └── stix.png
+├── LICENSE
 ├── pictures
 │   ├── app.png
 │   └── failed_logins_gui.png
@@ -29,14 +30,16 @@ The tool loads pre-defined YAML templates and allows you to select parameters su
 │   ├── cli.py
 │   ├── gui.py
 │   ├── __init__.py
-│   └── main.py
-├── templates
-│   ├── defender.yaml
-│   ├── elastic.yaml
-│   └── qradar.yaml
-└── utils
-    ├── configuration.py
-    └── generate_queries.py
+│   ├── main.py
+│   └── utils
+│       ├── configuration.py
+│       ├── generate_queries.py
+│       ├── __init__.py
+│       └── ui_constants.py
+└── templates
+    ├── defender.yaml
+    ├── elastic.yaml
+    └── qradar.yaml
 ```
 
 ## Requirements
