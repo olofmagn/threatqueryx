@@ -118,23 +118,23 @@ To add a new template, simply append a new entry string using the same structure
 
 > [!IMPORTANT]  
 > Note that some templates have `base:{events}` (that involves counts) do not use any projection or sorting by dates since we are focusing on raw events and further research:
-
-```yaml
-usernames_with_high_eventcount:
-  description: "Detect suspicious high event count from users"
-  base: "{events}"
-  required_fields:
-    - "username is NOT NULL GROUP BY username"
-  optional_fields:
-    count:
-      pattern: "qid HAVING COUNT() > {value}"
-      type: int
-      help: "Filter by event count"
-    username:
-      pattern: "username ilike '%{value}%'"
-      type: str
-      help: "Filter by username"
-```
+>
+> ```yaml
+> usernames_with_high_eventcount:
+>  description: "Detect suspicious high event count from users"
+>  base: "{events}"
+>  required_fields:
+>    - "username is NOT NULL GROUP BY username"
+>  optional_fields:
+>    count:
+>      pattern: "qid HAVING COUNT() > {value}"
+>      type: int
+>      help: "Filter by event count"
+>    username:
+>      pattern: "username ilike '%{value}%'"
+>      type: str
+>      help: "Filter by username"
+> ```
 > This helps identify anomalies or events that might be interesting for further analysis.
 
 
@@ -218,7 +218,7 @@ usernames_with_high_eventcount:
 
 
 > [!NOTE]  
->  The `optional_fields` allows some flexibility since some of the queries are statically defined because they focus on a specific behaviour or pattern to capture. I'll specify this in a more detail in the above template format section.
+>  The `optional_fields` allows some flexibility since some of the queries are statically defined because they focus on a specific behaviour or pattern to capture.
 
 
 ##  Usage
