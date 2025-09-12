@@ -103,17 +103,17 @@ Each template (e.g., `failed_logins`) defines the structure of a query, where `b
 > This helps identify accounts with unusually high activity that might indicate compromise or misuse with `optional_field: admin`.
 
 
-Each `optional_fields` must include a `pattern` (used for input validation) and a `help` text, which provides guidance on the field's purpose. This is useful in CLI mode or automated workflows. For Defender queries, an optional field `post_pipeline` allows you to toggle between raw event searches and structured, aggregated results (e.g., counts grouped by relevant fields). 
+Each `optional_fields` must include a `pattern` (used for input validation) and a `help` text, which provides guidance on the field's purpose. This is useful in CLI mode or automated workflows. For Defender queries, an optional field `post_pipeline` allows you to toggle between raw event searches and structured results. 
 
 Finally, the `validation` block, defines the backend checks to ensure the provided input adheres to expected formats or values. For more practical examples, see the `Usage` section. 
 
 > [!IMPORTANT]  
-> Please check your field mappings, as they might differ from those defined in the templates since some of them are custom implemented. For example, for **Request Mode** to work in Qradar platform: `("Request Mode" ilike '%POST%' or "Request Mode" ilike '%GET%')` the field must be correctly mapped and parsed in your environment to fetch HTTP verbs.
+> Please verify your field mappings, as they may differ from those defined in the templates definitions due to custom implementations. For example, for parameter **Request Mode** to work in Qradar platform, the query `("Request Mode" ilike '%POST%' or "Request Mode" ilike '%GET%')` requires the HTTP method field to be properly mapped and parsed to capture HTTP verbs. Similar considerations apply to Elastic regarding field types to work with wildcard searches and Defender regarding table schemas.
 
 
 
 ### Adding New Templates
-To add a new template, simply append a new entry string using the same structure to the appropriate YAML file (e.g., `templates/elastic.yaml`).
+To add a new template, simply append a new entry string using the same structure to the appropriate YAML file (e.g., `templates/qradar.yaml`).
 
 
 > [!IMPORTANT]  
