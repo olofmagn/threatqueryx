@@ -5,13 +5,13 @@ from typing import Dict, Tuple, Any
 
 from questionary import Separator
 
-from utils.configuration import (
+from src.utils.configuration import (
     normalize_lookback,
     resolve_platform_and_templates,
     validate,
 )
 
-from utils.generate_queries import build_query
+from src.utils.generate_queries import build_query
 
 """
 Cli interface

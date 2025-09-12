@@ -8,7 +8,7 @@ from typing import Dict, Any, Literal, Tuple, Optional
 import questionary
 import yaml
 
-from utils.ui_constants import (
+from src.utils.ui_constants import (
     DEFAULT_ENCODING,
     LOG_FORMAT,
     DEFAULT_LOGGER_NAME,

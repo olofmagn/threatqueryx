@@ -1,7 +1,7 @@
 import tkinter as tk
 import sys
 
-from utils.configuration import resolve_platform_and_templates, choose_mode
+from src.utils.configuration import resolve_platform_and_templates, choose_mode
 
 from .cli import QueryCli
 from .gui import QueryGui

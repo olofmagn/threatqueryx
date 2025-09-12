@@ -1,14 +1,15 @@
 import re
 import tkinter as tk
+
 from tkinter import ttk, messagebox
 from tkinter.scrolledtext import ScrolledText
 from typing import List, Optional
 
-from utils.generate_queries import build_query
+from src.utils.generate_queries import build_query
 
-from utils.configuration import load_templates, normalize_lookback, validate, get_logger
+from src.utils.configuration import load_templates, normalize_lookback, validate, get_logger
 
-from utils.ui_constants import (
+from src.utils.ui_constants import (
     DEFAULT_MODE,
     DEFAULT_TIME_RANGE_INDEX,
     DEFAULT_WINDOW_WIDTH,
